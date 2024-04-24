@@ -40,6 +40,8 @@ namespace MaterialSkin.Controls
                 RecalculateFormBoundaries();
             }
         }
+        [Category("Material Skin"), Browsable(true), DisplayName("Exit Application On Close Form"), DefaultValue(false)]
+        public bool ExitApplicationOnCloseForm { get; set; }
 
         [Category("Drawer")]
         public bool DrawerShowIconsWhenHidden
@@ -148,7 +150,7 @@ namespace MaterialSkin.Controls
 
         [Category("Drawer")]
         public MaterialTabControl DrawerTabControl { get; set; }
-
+       
         public override string Text
         {
             get { return base.Text; }
@@ -606,7 +608,8 @@ namespace MaterialSkin.Controls
 
         private void TerminateOnClose(object sender, FormClosedEventArgs e)
         {
-            Application.Exit();
+            if (ExitApplicationOnCloseForm)
+                Application.Exit();
         }
 
         private void FixFormPadding(object sender)

@@ -154,7 +154,7 @@
             set
             {
                 _trailingIcon = value;
-                UpdateRects();
+                 UpdateRects();
                 preProcessIcons();
                 Invalidate();
             }

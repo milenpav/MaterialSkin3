@@ -17,10 +17,10 @@
     {
 
         private const int ICON_SIZE = 24;
-        private const int MINIMUMWIDTH = 64;
+        private const int MINIMUMWIDTH = 100;
         private const int MINIMUMWIDTHICONONLY = 36; //64;
-        private const int HEIGHTDEFAULT = 36;
-        private const int HEIGHTDENSE = 32;
+        private int HEIGHT_DEFAULT = 42;
+        private const int HEIGHTDENSE = 40;
 
         // icons
         private TextureBrush iconsBrushes;
@@ -47,7 +47,9 @@
         {
             Text,
             Outlined,
-            Contained
+            Filled,
+            Elevated,
+            Tonal
         }
 
         public enum MaterialButtonDensity
@@ -105,7 +107,7 @@
                 if (_density== MaterialButtonDensity.Dense)
                     Size = new Size(Size.Width, HEIGHTDENSE);
                 else
-                    Size = new Size(Size.Width, HEIGHTDEFAULT);
+                    Size = new Size(Size.Width, HEIGHT_DEFAULT);
                 Invalidate();
             }
         }
@@ -131,6 +133,7 @@
         }
         protected override void InitLayout()
         {
+          
             base.InitLayout();
             Invalidate();
             LocationChanged += (sender, e) => { if (DrawShadows) Parent?.Invalidate(); };
@@ -233,10 +236,11 @@
         /// </summary>
         public MaterialButton()
         {
+           
             DrawShadows = true;
             HighEmphasis = true;
             UseAccentColor = false;
-            Type = MaterialButtonType.Contained;
+            Type = MaterialButtonType.Filled;
             Density = MaterialButtonDensity.Default;
             NoAccentTextColor = Color.Empty;
             CharacterCasing = CharacterCasingEnum.Upper;
@@ -310,7 +314,7 @@
                 return;
             }
 
-            if (!DrawShadows || Type != MaterialButtonType.Contained || Parent == null) return;
+            if (!DrawShadows || Type != MaterialButtonType.Filled || Parent == null) return;
 
             // paint shadow on parent
             Graphics gp = e.Graphics;
@@ -359,7 +363,7 @@
             Bitmap IconResized = new Bitmap(Icon, newWidth, newHeight);
 
             // Calculate lightness and color
-            float l = (SkinManager.Theme == MaterialSkinManager.Themes.LIGHT & (highEmphasis == false | Enabled == false | Type != MaterialButtonType.Contained)) ? 0f : 1.5f;
+            float l = (SkinManager.Theme == MaterialSkinManager.Themes.LIGHT & (highEmphasis == false | Enabled == false | Type != MaterialButtonType.Filled)) ? 0f : 1.5f;
 
             // Create matrices
             float[][] matrixGray = {
@@ -427,12 +431,16 @@
             RectangleF buttonRectF = new RectangleF(ClientRectangle.Location, ClientRectangle.Size);
             buttonRectF.X -= 0.5f;
             buttonRectF.Y -= 0.5f;
-            GraphicsPath buttonPath = DrawHelper.CreateRoundRect(buttonRectF, 4);
+            buttonRectF.Height-=2;
+            buttonRectF.Width-=2;
+            GraphicsPath buttonPath = DrawHelper.CreateRoundRect(buttonRectF, Math.Min(ClientRectangle.Width, ClientRectangle.Height) / 2);
 
             // button shadow (blend with form shadow)
+        
             DrawHelper.DrawSquareShadow(g, ClientRectangle);
 
-            if (Type == MaterialButtonType.Contained)
+
+            if (Type == MaterialButtonType.Filled)
             {
                 // draw button rect
                 // Disabled
@@ -457,6 +465,22 @@
                     }
                 }
             }
+            else if(Type == MaterialButtonType.Elevated)
+            {
+                using (SolidBrush normalBrush = new SolidBrush(SkinManager.CardsColor))
+                {
+                    g.FillPath(normalBrush, buttonPath);
+                }
+                DrawHelper.DrawElevatedShadow(g, ClientRectangle);
+
+            }
+            else if (Type==MaterialButtonType.Tonal)
+            {
+                using (SolidBrush normalBrush = new SolidBrush(SkinManager.ColorScheme.LightPrimaryColor))
+                {
+                    g.FillPath(normalBrush, buttonPath);
+                }
+            }
             else
             {
                 g.Clear(Parent.BackColor);
@@ -466,10 +490,10 @@
             if (hoverAnimProgress > 0)
             {
                 using (SolidBrush hoverBrush = new SolidBrush(Color.FromArgb(
-                    (int)(HighEmphasis && Type == MaterialButtonType.Contained ? hoverAnimProgress * 80 : hoverAnimProgress * SkinManager.BackgroundHoverColor.A), (UseAccentColor ? (HighEmphasis && Type == MaterialButtonType.Contained ?
+                    (int)(HighEmphasis && Type == MaterialButtonType.Filled ? hoverAnimProgress * 80 : hoverAnimProgress * SkinManager.BackgroundHoverColor.A), (UseAccentColor ? (HighEmphasis && Type == MaterialButtonType.Filled ?
                     SkinManager.ColorScheme.AccentColor.Lighten(0.5f) : // Contained with Emphasis - with accent
                     SkinManager.ColorScheme.AccentColor) : // Not Contained Or Low Emphasis - with accent
-                    (Type == MaterialButtonType.Contained && HighEmphasis ? SkinManager.ColorScheme.LightPrimaryColor : // Contained with Emphasis without accent
+                    (Type == MaterialButtonType.Filled && HighEmphasis ? SkinManager.ColorScheme.LightPrimaryColor : // Contained with Emphasis without accent
                     SkinManager.ColorScheme.PrimaryColor)).RemoveAlpha()))) // Normal or Emphasis without accent
                 {
                     g.FillPath(hoverBrush, buttonPath);
@@ -480,10 +504,10 @@
             if (focusAnimProgress > 0)
             {
                 using (SolidBrush focusBrush = new SolidBrush(Color.FromArgb(
-                    (int)(HighEmphasis && Type == MaterialButtonType.Contained ? focusAnimProgress * 80 : focusAnimProgress * SkinManager.BackgroundFocusColor.A), (UseAccentColor ? (HighEmphasis && Type == MaterialButtonType.Contained ?
+                    (int)(HighEmphasis && Type == MaterialButtonType.Filled ? focusAnimProgress * 80 : focusAnimProgress * SkinManager.BackgroundFocusColor.A), (UseAccentColor ? (HighEmphasis && Type == MaterialButtonType.Filled ?
                     SkinManager.ColorScheme.AccentColor.Lighten(0.5f) : // Contained with Emphasis - with accent
                     SkinManager.ColorScheme.AccentColor) : // Not Contained Or Low Emphasis - with accent
-                    (Type == MaterialButtonType.Contained && HighEmphasis ? SkinManager.ColorScheme.LightPrimaryColor : // Contained with Emphasis without accent
+                    (Type == MaterialButtonType.Filled && HighEmphasis ? SkinManager.ColorScheme.LightPrimaryColor : // Contained with Emphasis without accent
                     SkinManager.ColorScheme.PrimaryColor)).RemoveAlpha()))) // Normal or Emphasis without accent
                 {
                     g.FillPath(focusBrush, buttonPath);
@@ -492,13 +516,15 @@
 
             if (Type == MaterialButtonType.Outlined)
             {
-                using (Pen outlinePen = new Pen(Enabled ? SkinManager.DividersAlternativeColor : SkinManager.DividersColor, 1))
+                
+                using (Pen outlinePen = new Pen(Enabled ? UseAccentColor ? SkinManager.ColorScheme.AccentColor : SkinManager.ColorScheme.PrimaryColor : SkinManager.DividersAlternativeColor, 1))
                 {
                     buttonRectF.X += 0.5f;
                     buttonRectF.Y += 0.5f;
                     g.DrawPath(outlinePen, buttonPath);
                 }
             }
+            
 
             //Ripple
             if (_animationManager.IsAnimating())
@@ -511,7 +537,7 @@
 
                     using (Brush rippleBrush = new SolidBrush(
                         Color.FromArgb((int)(100 - (animationValue * 100)), // Alpha animation
-                        (Type == MaterialButtonType.Contained && HighEmphasis ? (UseAccentColor ?
+                        (Type == MaterialButtonType.Filled && HighEmphasis ? (UseAccentColor ?
                             SkinManager.ColorScheme.AccentColor.Lighten(0.5f) : // Emphasis with accent
                             SkinManager.ColorScheme.LightPrimaryColor) : // Emphasis
                             (UseAccentColor ? SkinManager.ColorScheme.AccentColor : // Normal with accent
@@ -531,8 +557,13 @@
                 textRect.Width -= 8 + ICON_SIZE + 4 + 8; // left padding + icon width + space between Icon and Text + right padding
                 textRect.X += 8 + ICON_SIZE + 4; // left padding + icon width + space between Icon and Text
             }
+            else
+            {
+                textRect.Width -= 16; // left padding + icon width + space between Icon and Text + right padding
+                textRect.X += 8;
+            }
 
-            Color textColor = Enabled ? (HighEmphasis ? (Type == MaterialButtonType.Text || Type == MaterialButtonType.Outlined) ?
+            Color textColor = Enabled ? (HighEmphasis ? (Type == MaterialButtonType.Text || Type == MaterialButtonType.Outlined||Type==MaterialButtonType.Elevated) ?
                 UseAccentColor ? SkinManager.ColorScheme.AccentColor : // Outline or Text and accent and emphasis
                 NoAccentTextColor == Color.Empty ? 
                 SkinManager.ColorScheme.PrimaryColor :  // Outline or Text and emphasis
@@ -600,12 +631,12 @@
             {
                 s.Width = (int)Math.Ceiling(_textSize.Width);
                 s.Width += extra;
-                s.Height = HEIGHTDEFAULT;
+                s.Height = HEIGHT_DEFAULT;
             }
             else
             {
                 s.Width += extra;
-                s.Height = HEIGHTDEFAULT;
+                s.Height = HEIGHT_DEFAULT;
             }
             if (Icon != null && Text.Length==0 && s.Width < MINIMUMWIDTHICONONLY) s.Width = MINIMUMWIDTHICONONLY;
             else if (s.Width < MINIMUMWIDTH) s.Width = MINIMUMWIDTH;

@@ -48,12 +48,14 @@
             addFont(Resources.Roboto_Medium);
             addFont(Resources.Roboto_Bold);
             addFont(Resources.Roboto_Black);
-
+            addFont(Resources.MaterialIcons_Regular);
+            
             RobotoFontFamilies = new Dictionary<string, FontFamily>();
             foreach (FontFamily ff in privateFontCollection.Families.ToArray())
             {
                 RobotoFontFamilies.Add(ff.Name.Replace(' ', '_'), ff);
             }
+            icons = new Font(privateFontCollection.Families[0],16);
 
             // create and save font handles for GDI
             logicalFonts = new Dictionary<string, IntPtr>(18);
@@ -77,6 +79,21 @@
             logicalFonts.Add("textBox14", createLogicalFont("Roboto", 14, NativeTextRenderer.logFontWeight.FW_REGULAR));
             logicalFonts.Add("textBox13", createLogicalFont("Roboto Medium", 13, NativeTextRenderer.logFontWeight.FW_MEDIUM));
             logicalFonts.Add("textBox12", createLogicalFont("Roboto Medium", 12, NativeTextRenderer.logFontWeight.FW_MEDIUM));
+
+            
+        }
+        public Icon GetIcon(MaterialIcon icon)
+        {
+            switch (icon)
+            {
+                case MaterialIcon.Star:
+                    return  new Icon("\uE838");
+                case MaterialIcon.Favorite:
+                    return new Icon("\uE87D");
+                default:
+                    return new Icon("\0");
+
+            }
         }
 
         // Destructor
@@ -102,6 +119,7 @@
                 ThemeChanged?.Invoke(this);
             }
         }
+     
 
         private ColorScheme _colorScheme;
 
@@ -115,6 +133,7 @@
                 ColorSchemeChanged?.Invoke(this);
             }
         }
+ 
 
         public enum Themes : byte
         {
@@ -364,6 +383,7 @@
 
         // Font stuff
         private Dictionary<string, IntPtr> logicalFonts;
+        private  Font icons;
 
         private Dictionary<string, FontFamily> RobotoFontFamilies;
 
@@ -398,6 +418,8 @@
         // Dyanmic Themes
         public void AddFormToManage(MaterialForm materialForm)
         {
+            materialForm.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+
             _formsToManage.Add(materialForm);
             UpdateBackgrounds();
 

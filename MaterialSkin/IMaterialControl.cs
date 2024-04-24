@@ -14,7 +14,7 @@
         /// Gets the SkinManager
         /// </summary>
         MaterialSkinManager SkinManager { get; }
-
+        
         /// <summary>
         /// Gets or sets the MouseState
         /// </summary>

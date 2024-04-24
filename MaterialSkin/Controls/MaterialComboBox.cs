@@ -7,6 +7,7 @@
     using System.Linq;
     using System.Data;
     using System.Windows.Forms;
+    using System.Drawing.Drawing2D;
 
     public class MaterialComboBox : ComboBox, IMaterialControl
     {
@@ -99,7 +100,6 @@
         public MaterialComboBox()
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
-
             // Material Properties
             Hint = "";
             UseAccent = true;
@@ -164,18 +164,46 @@
             };
         }
 
+    
+
         protected override void OnPaint(PaintEventArgs pevent)
         {
             Graphics g = pevent.Graphics;
 
             g.Clear(Parent.BackColor);
-            g.FillRectangle(Enabled ? Focused ?
-                SkinManager.BackgroundFocusBrush : // Focused
-                MouseState == MouseState.HOVER ?
-                SkinManager.BackgroundHoverBrush : // Hover
-                SkinManager.BackgroundAlternativeBrush : // normal
-                SkinManager.BackgroundDisabledBrush // Disabled
-                , ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, LINE_Y);
+            GraphicsPath roundedRectPath = DrawHelper.CreateRoundRect(
+       ClientRectangle.X,
+       ClientRectangle.Y,
+       ClientRectangle.Width,
+       LINE_Y,
+       4); // yourCornerRadius трябва да бъде радиусът на закръглените ъгли
+
+            SolidBrush fillBrush;
+            if (Enabled)
+            {
+                if (Focused)
+                {
+                    fillBrush = new SolidBrush(SkinManager.BackgroundFocusColor); // Focused
+                }
+                else if (MouseState == MouseState.HOVER)
+                {
+                    fillBrush = new SolidBrush(SkinManager.BackgroundHoverColor); // Hover
+                }
+                else
+                {
+                    fillBrush = new SolidBrush(SkinManager.BackgroundAlternativeColor); // Normal
+                }
+            }
+            else
+            {
+                fillBrush = new SolidBrush(SkinManager.BackgroundDisabledColor); // Disabled
+            }
+
+            g.FillPath(fillBrush, roundedRectPath);
+
+            // Не забравяйте да освободите ресурсите
+            roundedRectPath.Dispose();
+            fillBrush.Dispose();
 
             //Set color and brush
             Color SelectedColor = new Color();

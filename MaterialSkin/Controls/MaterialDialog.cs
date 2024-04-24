@@ -7,6 +7,7 @@
     using System.Drawing.Drawing2D;
     using System.Windows.Forms;
     using System.Runtime.InteropServices;
+    using System.Runtime.CompilerServices;
 
     public class MaterialDialog : MaterialForm
     {
@@ -52,7 +53,7 @@
                 BackColor = Color.Black,
                 Opacity = 0.5,
                 MinimizeBox = false,
-                MaximizeBox = false,
+                MaximizeBox = true,
                 Text = "",
                 ShowIcon = false,
                 ControlBox = false,
@@ -144,11 +145,53 @@
             //this Dispose();
             //return materialDialogResult;
         }
+        public MaterialDialog(Form ParentForm, string Title, UserControl userControl)
+        {
+
+            _formOverlay = new Form
+            {
+                BackColor = Color.Black,
+                Opacity = 0.5,
+                MinimizeBox = false,
+                MaximizeBox = false,
+                Text = "",
+                ShowIcon = false,
+                ControlBox = false,
+                FormBorderStyle = FormBorderStyle.None,
+                Size = new Size(ParentForm.Width, ParentForm.Height),
+                ShowInTaskbar = true,
+                Owner = ParentForm,
+                Visible = true,
+                Location = new Point(ParentForm.Location.X, ParentForm.Location.Y),
+                Anchor = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right | AnchorStyles.Bottom,
+            };
+            Owner = ParentForm;
+            _title = Title;
+            if (Title.Length == 0)
+                _header_Height = 0;
+            else
+                _header_Height = 40;
+
+            _text = Text;
+            ShowInTaskbar = true;
+            Sizable = true;
+            AutoSize = true;
+            AutoSizeMode = AutoSizeMode.GrowAndShrink;
+
+            BackColor = SkinManager.BackgroundColor;
+            FormStyle = FormStyles.ActionBar_40;
+            _AnimationManager = new AnimationManager();
+            _AnimationManager.AnimationType = AnimationType.EaseOut;
+            _AnimationManager.Increment = 0.03;
+            _AnimationManager.OnAnimationProgress += _AnimationManager_OnAnimationProgress;
+
+            Controls.Add(userControl);
+        }
 
         public MaterialDialog(Form ParentForm) : this(ParentForm, "Title", "Dialog box", "OK", false, "Cancel", false)
         {
         }
-
+    
         public MaterialDialog(Form ParentForm, string Text) : this(ParentForm, "Title", Text, "OK", false, "Cancel", false)
         {
         }
@@ -172,6 +215,7 @@
        public MaterialDialog(Form ParentForm, string Title, string Text, string ValidationButtonText, bool ShowCancelButton, string CancelButtonText) : this(ParentForm, Title, Text, ValidationButtonText, ShowCancelButton, CancelButtonText, false)
         {
         }
+        
 
 
         /// <summary>
@@ -290,8 +334,15 @@
         private void InitializeComponent()
         {
             this.SuspendLayout();
+            // 
+            // MaterialDialog
+            // 
+            this.AutoSize = true;
+            this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(560, 182);
-            this.Name = "Dialog";
+            this.Name = "MaterialDialog";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.ResumeLayout(false);
 
         }

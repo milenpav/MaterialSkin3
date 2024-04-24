@@ -4,6 +4,7 @@ namespace MaterialSkin.Controls
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Drawing;
+    using System.Drawing.Drawing2D;
     using System.Drawing.Imaging;
     using System.Windows.Forms;
     using MaterialSkin.Animations;
@@ -1383,14 +1384,37 @@ namespace MaterialSkin.Controls
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
             g.Clear(Parent.BackColor);
             SolidBrush backBrush = new SolidBrush(DrawHelper.BlendColor(Parent.BackColor, SkinManager.BackgroundAlternativeColor, SkinManager.BackgroundAlternativeColor.A));
-            
-            //backColor
-            g.FillRectangle(
-                !Enabled ? SkinManager.BackgroundDisabledBrush : // Disabled
-                isFocused ? SkinManager.BackgroundFocusBrush :  // Focused
-                MouseState == MouseState.HOVER && (!ReadOnly || (ReadOnly && !AnimateReadOnly)) ? SkinManager.BackgroundHoverBrush : // Hover
-                backBrush, // Normal
-                ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, LINE_Y);
+            GraphicsPath roundedRectPath = DrawHelper.CreateRoundRect(
+     ClientRectangle.X,
+     ClientRectangle.Y,
+     ClientRectangle.Width,
+     LINE_Y,
+     4);
+
+            SolidBrush fillBrush;
+            if (!Enabled)
+            {
+                fillBrush = new SolidBrush(SkinManager.BackgroundDisabledColor); // Disabled
+            }
+            else if (isFocused)
+            {
+                fillBrush = new SolidBrush(SkinManager.BackgroundFocusColor); // Focused
+            }
+            else if (MouseState == MouseState.HOVER && (!ReadOnly || (ReadOnly && !AnimateReadOnly)))
+            {
+                fillBrush = new SolidBrush(SkinManager.BackgroundHoverColor); // Hover
+            }
+            else
+            {
+                fillBrush = backBrush; // Normal
+            }
+
+            g.FillPath(fillBrush, roundedRectPath);
+
+            // Не забравяйте да освободите ресурсите
+            roundedRectPath.Dispose();
+
+
 
             baseTextBox.BackColor = !Enabled ? ColorHelper.RemoveAlpha(SkinManager.BackgroundDisabledColor, BackColor) : //Disabled
                 isFocused ? DrawHelper.BlendColor(BackColor, SkinManager.BackgroundFocusColor, SkinManager.BackgroundFocusColor.A) : //Focused

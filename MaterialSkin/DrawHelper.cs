@@ -1,7 +1,9 @@
 ﻿namespace MaterialSkin
 {
+    using System;
     using System.Drawing;
     using System.Drawing.Drawing2D;
+    using System.Windows.Forms;
 
     /// <summary>
     /// Defines the <see cref="DrawHelper" />
@@ -78,22 +80,58 @@
             return BlendColor(backgroundColor, frontColor, frontColor.A);
         }
 
+
         public static void DrawSquareShadow(Graphics g, Rectangle bounds)
         {
+            int radius = Math.Min(bounds.Width, bounds.Height) / 2;
             using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(12, 0, 0, 0)))
             {
                 GraphicsPath path;
-                path = DrawHelper.CreateRoundRect(new RectangleF(bounds.X - 3.5f, bounds.Y - 1.5f, bounds.Width + 6, bounds.Height + 6), 8);
+                path = DrawHelper.CreateRoundRect(new RectangleF(bounds.X - 2f, bounds.Y - 1.5f, bounds.Width + 2, bounds.Height + 2), radius+6);
                 g.FillPath(shadowBrush, path);
-                path = DrawHelper.CreateRoundRect(new RectangleF(bounds.X - 2.5f, bounds.Y - 1.5f, bounds.Width + 4, bounds.Height + 4), 6);
+                path = DrawHelper.CreateRoundRect(new RectangleF(bounds.X - 1.5f, bounds.Y - 1.5f, bounds.Width + 1, bounds.Height + 1), radius+4);
                 g.FillPath(shadowBrush, path);
-                path = DrawHelper.CreateRoundRect(new RectangleF(bounds.X - 1.5f, bounds.Y - 0.5f, bounds.Width + 2, bounds.Height + 2), 4);
+                path = DrawHelper.CreateRoundRect(new RectangleF(bounds.X - 0.5f, bounds.Y - 0.5f, bounds.Width + 0.5f, bounds.Height + 0.5f), radius+2);
                 g.FillPath(shadowBrush, path);
-                path = DrawHelper.CreateRoundRect(new RectangleF(bounds.X - 0.5f, bounds.Y + 1.5f, bounds.Width + 0, bounds.Height + 0), 4);
+                path = DrawHelper.CreateRoundRect(new RectangleF(bounds.X - 0.5f, bounds.Y + 1.5f, bounds.Width + 0, bounds.Height + 0), radius);
                 g.FillPath(shadowBrush, path);
-                path = DrawHelper.CreateRoundRect(new RectangleF(bounds.X - 0.5f, bounds.Y + 2.5f, bounds.Width + 0, bounds.Height + 0), 4);
+                path = DrawHelper.CreateRoundRect(new RectangleF(bounds.X - 0.5f, bounds.Y + 2.5f, bounds.Width + 0, bounds.Height + 0), radius);
                 g.FillPath(shadowBrush, path);
                 path.Dispose();
+            }
+        }
+        public static void DrawElevatedShadow(Graphics g, Rectangle bounds)
+        {
+            using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(12, 0, 0, 0)))
+            {
+                GraphicsPath path = new GraphicsPath();
+                float cornerRadius = 18;
+                path.AddRoundRectangle(bounds, cornerRadius);
+
+                float shadowWidth = 10;
+                // Рисуване на сянката с различни размери и цветове
+                for (float i = 0; i < shadowWidth; i++)
+                {
+                    GraphicsPath shadowPath = new GraphicsPath();
+                    RectangleF shadowBounds = new RectangleF(bounds.X - i, bounds.Y - i, bounds.Width + 2 * i, bounds.Height + 2 * i);
+                    path.Reset();
+                    path.AddRoundRectangle(shadowBounds, cornerRadius);
+
+                    // Рисуване на елиптична маска
+                    GraphicsPath maskPath = new GraphicsPath();
+                    maskPath.AddRoundRectangle(shadowBounds, cornerRadius);
+
+                    // Прозрачност на текущия път спрямо размера на маската
+                    Region currentRegion = new Region(path);
+                    currentRegion.Exclude(maskPath);
+
+                    // Рисуване на сянката
+                    g.FillRegion(shadowBrush, currentRegion);
+
+                    // Освобождаване на паметта, заета от пътя на сянката и маската
+                    shadowPath.Dispose();
+                    maskPath.Dispose();
+                }
             }
         }
 
@@ -107,6 +145,20 @@
                 g.FillEllipse(shadowBrush, new Rectangle(bounds.X - 0, bounds.Y + 2, bounds.Width + 0, bounds.Height + 0));
                 g.FillEllipse(shadowBrush, new Rectangle(bounds.X - 0, bounds.Y + 1, bounds.Width + 0, bounds.Height + 0));
             }
+        }
+        public static void AddRoundRectangle(this GraphicsPath path, RectangleF bounds, float cornerRadius)
+        {
+            float diameter = cornerRadius * 2;
+            SizeF size = new SizeF(diameter, diameter);
+            RectangleF arc = new RectangleF(bounds.Location, size);
+            path.AddArc(arc, 180, 90);
+            arc.X = bounds.Right - diameter;
+            path.AddArc(arc, 270, 90);
+            arc.Y = bounds.Bottom - diameter;
+            path.AddArc(arc, 0, 90);
+            arc.X = bounds.Left;
+            path.AddArc(arc, 90, 90);
+            path.CloseFigure();
         }
     }
 }

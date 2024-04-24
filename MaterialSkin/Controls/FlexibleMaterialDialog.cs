@@ -229,7 +229,7 @@ namespace MaterialSkin.Controls
             this.rightButton.Size = new System.Drawing.Size(106, 36);
             this.rightButton.TabIndex = 13;
             this.rightButton.Text = "OK";
-            this.rightButton.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
+            this.rightButton.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Filled;
             this.rightButton.UseAccentColor = false;
             this.rightButton.UseVisualStyleBackColor = true;
             this.rightButton.Visible = false;
