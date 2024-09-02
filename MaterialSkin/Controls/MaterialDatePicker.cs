@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using System.Drawing;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace MaterialSkin.Controls
@@ -16,7 +11,7 @@ namespace MaterialSkin.Controls
     {
 
         public override Color BackColor { get { return Parent == null ? SkinManager.BackgroundColor : Parent.BackColor; } }
-
+        private MaterialButton btnToday;
         private RectangleF TopDayRect;
         private RectangleF TopDateRect;
         private RectangleF MonthRect;
@@ -49,9 +44,12 @@ namespace MaterialSkin.Controls
 
         private Brush HoverBrush;
 
-        public MaterialDatePicker()
+        public MaterialDatePicker(DateTime date)
         {
+            CurrentDate =date;
+
             InitializeComponent();
+
             Width = 250;
             Height = 425;
             TopDayRect = new RectangleF(0f, 0f, Width, 20f);
@@ -71,7 +69,6 @@ namespace MaterialSkin.Controls
             YeahrFont = SkinManager.getFontByType(MaterialSkinManager.fontType.H5);
             DoubleBuffered = true;
             DateRectDefaultSize = (Width - 10) / 7;
-            CurrentDate = DateTime.Now;
             KeyDown+=(sender, e) =>
             {
                 if (e.KeyCode==Keys.Escape)
@@ -81,8 +78,26 @@ namespace MaterialSkin.Controls
             HoverY = -1;
             CalculateRectangles();
 
-        }
+            // Инициализация и настройка на бутона
+            btnToday = new MaterialButton();
+            btnToday.Text = "Днес";
+            btnToday.Size = new Size(Width - 20, 30);
+            btnToday.Dock = DockStyle.Bottom;
+            btnToday.Location = new Point(10, Height - 40); // Разполагаме бутона в долната част
+            btnToday.Click += BtnToday_Click;
+            this.Controls.Add(btnToday);
+            Invalidate();
 
+
+
+        }
+        private void BtnToday_Click(object sender, EventArgs e)
+        {
+            CurrentDate = DateTime.Now;
+            CalculateRectangles();
+            Invalidate();
+        }
+   
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
@@ -135,6 +150,8 @@ namespace MaterialSkin.Controls
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
+          
+
             if (HoverX >= 0)
             {
                 SelectedX = HoverX;

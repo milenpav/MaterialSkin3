@@ -1,6 +1,6 @@
 ﻿namespace MaterialSkin.Controls
 {
-    partial class MaterialDatePicker
+    partial class MaterialAutoCompleteComboBox
     {
         /// <summary>
         /// Required designer variable.
@@ -28,17 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.SuspendLayout();
-            // 
-            // MaterialDatePicker
-            // 
-            this.ClientSize = new System.Drawing.Size(300, 300);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.Name = "MaterialDatePicker";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.TopMost = true;
-            this.ResumeLayout(false);
-
+            components = new System.ComponentModel.Container();
         }
 
         #endregion

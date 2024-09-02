@@ -11,6 +11,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
+using System.Reflection;
 
 #endregion
 
@@ -113,17 +115,39 @@ namespace MaterialSkin.Controls
                 Invalidate();
             }
         }
+        public int HoveredItem { get { return _hoveredItem; }
+            set { 
+                _hoveredItem = value; 
+                EnsureVisible(value);
+                Invalidate();
+            }
+        }
+
+        private void EnsureVisible(int index)
+        {
+            if (index < 0 || index >= _items.Count) return;
+
+            int top = index * _itemHeight;
+            int bottom = top +_itemHeight;
+
+            if (top < _scrollBar.Value)
+            {
+                _scrollBar.Value = top;
+            }
+            else if (bottom > _scrollBar.Value + ClientSize.Height+10)
+            {
+                _scrollBar.Value = Math.Min(bottom - ClientSize.Height+10, _scrollBar.Maximum);
+            }
+            Invalidate();
+
+        }
 
         [Browsable(false), Category("Material Skin"),
          Description("Gets the currently selected Text in the ListBox.")]
         public string SelectedText
         {
             get => _selectedText;
-            //set
-            //{
-            //    _selectedText = value;
-            //    Invalidate();
-            //}
+          
         }
 
         [Browsable(false), Category("Material Skin"), Description("Gets or sets the zero-based index of the currently selected item in a ListBox.")]
@@ -240,6 +264,9 @@ namespace MaterialSkin.Controls
                 Invalidate();
             }
         }
+
+        public MaterialScrollBar VerticalScroll { get { return _scrollBar; } }
+
 
         #endregion Properties
 
@@ -847,6 +874,7 @@ namespace MaterialSkin.Controls
             }
             base.WndProc(ref m);
         }
+
     }
 
     #endregion

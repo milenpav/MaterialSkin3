@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace MaterialSkin.Controls
@@ -7,12 +9,16 @@ namespace MaterialSkin.Controls
     public partial class MaterialDataTable : MaterialListView, IMaterialControl
     {
         private ListViewItem[] _items;
+        private int _sortColumn = -1;
+        private SortOrder _sortOrder = SortOrder.None;
         [Browsable(false)]
         public ListViewItem[] DataItems {
             set {
                 _items = value;
                 Items.AddRange(_items);
                 ItemsCounterText();
+                if (!string.IsNullOrEmpty(_searchTextBox?.Text))
+                    ColumnSearchTextBox_TextChanged(this, EventArgs.Empty);
             }
         }
 
@@ -31,6 +37,10 @@ namespace MaterialSkin.Controls
         {
             InitializeHeader();
             InitializeFooter();
+            this.ColumnClick += new ColumnClickEventHandler(OnColumnClick);
+            this.KeyDown += new KeyEventHandler(OnKeyDown);
+            this.MultiSelect = true;
+
         }
 
         private void InitializeHeader()
@@ -42,16 +52,17 @@ namespace MaterialSkin.Controls
             _headerPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             this.HandleCreated += (sender, e) =>
             {
-                var parentForm = this.FindForm();
-                if (parentForm != null)
+                var parentControl = this.Parent;
+                if (parentControl != null&&!DesignMode )
                 {
-                    parentForm.Controls.Add(_headerPanel);
+
+                    parentControl.Controls.Add(_headerPanel);
 
                     _headerLabel = new MaterialLabel()
                     {
                         Margin = new Padding(10, 0, 0, 0),
                         Text = _heading,
-                         Anchor = AnchorStyles.None,
+                        Anchor = AnchorStyles.None,
                         AutoSize =true,
                         FontType = MaterialSkinManager.fontType.H5
                     };
@@ -64,6 +75,7 @@ namespace MaterialSkin.Controls
                     };
                     _searchTextBox.TextChanged += ColumnSearchTextBox_TextChanged;
                     _headerPanel.Controls.Add(_searchTextBox);
+
                 }
             };
         }
@@ -77,10 +89,10 @@ namespace MaterialSkin.Controls
             _footerPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             this.HandleCreated += (sender, e) =>
             {
-                var parentForm = this.FindForm();
-                if (parentForm != null)
+                var parentControl = this.Parent;
+                if (parentControl != null &&!DesignMode)
                 {
-                    parentForm.Controls.Add(_footerPanel); // Добавяме го към формата
+                    parentControl.Controls.Add(_footerPanel); // Добавяме го към формата
 
                     _itemCountLabel = new MaterialLabel()
                     {
@@ -102,34 +114,114 @@ namespace MaterialSkin.Controls
         private void ColumnSearchTextBox_TextChanged(object sender, EventArgs e)
         {
             this.Items.Clear();
-            if (!string.IsNullOrEmpty(_searchTextBox.Text))
+            string searchText = _searchTextBox.Text.Trim();
+
+            if (!string.IsNullOrEmpty(searchText))
             {
-                foreach (ListViewItem item in _items)
-                {
-                    bool found = false;
-                    foreach (ColumnHeader column in Columns)
+                var searchWords = searchText.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                var foundItems = _items
+                    .Select(item => new
                     {
-                        if (column.Index >= 0 && column.Index < item.SubItems.Count &&
-                            item.SubItems[column.Index].Text.ToLower().Contains(_searchTextBox.Text.ToLower()))
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (found)
-                    {
-                        Items.Add(item);
-                    }
-                }
+                        Item = item,
+                        // Изчисляване на релевантността
+                        Relevance = searchWords.Sum(word => item.SubItems.Cast<ListViewItem.ListViewSubItem>()
+                            .Count(subItem => subItem.Text.IndexOf(word, StringComparison.OrdinalIgnoreCase) >= 0)),
+                        // Минимална позиция на съвпадение в текста
+                        Position = searchWords.Select(word => item.SubItems.Cast<ListViewItem.ListViewSubItem>()
+                            .Select(subItem => subItem.Text.IndexOf(word, StringComparison.OrdinalIgnoreCase))
+                            .Where(index => index >= 0)
+                            .DefaultIfEmpty(int.MaxValue)
+                            .Min()).Min()
+                    })
+                    .Where(x => x.Relevance > 0)
+                    .OrderBy(x => x.Position) // По позиция на съвпадение
+                    .ThenByDescending(x => x.Relevance) // След това по релевантност
+                    .Select(x => x.Item)
+                    .ToArray();
+
+                Items.AddRange(foundItems);
+
             }
             else
             {
                 Items.AddRange(_items);
             }
 
+            ItemsCounterText();
         }
 
-      
+        private void OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Control && e.KeyCode == Keys.C)
+            {
+                CopySelectedItemsToClipboard();
+            }
+        }
 
+        private void CopySelectedItemsToClipboard()
+        {
+            if (SelectedItems.Count > 0)
+            {
+                var sb = new System.Text.StringBuilder();
+                foreach (ListViewItem item in SelectedItems)
+                {
+                    for (int i = 0; i < item.SubItems.Count; i++)
+                    {
+                        if (i > 0)
+                        {
+                            sb.Append("\t");
+                        }
+                        sb.Append(item.SubItems[i].Text);
+                    }
+                    sb.AppendLine();
+                }
+                Clipboard.SetText(sb.ToString());
+            }
+        }
+
+        private void OnColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            if (e.Column == _sortColumn)
+            {
+                // Ако колоната е същата, сменете реда на сортиране
+                _sortOrder = _sortOrder == SortOrder.Ascending ? SortOrder.Descending : SortOrder.Ascending;
+            }
+            else
+            {
+                // Ако колоната е различна, задайте нова колона и ред на сортиране
+                _sortColumn = e.Column;
+                _sortOrder = SortOrder.Ascending;
+            }
+
+            // Задаване на сортиращия обект
+            this.ListViewItemSorter = new ListViewItemComparer(e.Column, _sortOrder);
+            this.Sort();
+        }
+    }
+
+    public class ListViewItemComparer : IComparer
+    {
+        private int _column;
+        private SortOrder _order;
+
+        public ListViewItemComparer(int column, SortOrder order)
+        {
+            _column = column;
+            _order = order;
+        }
+
+        public int Compare(object x, object y)
+        {
+            ListViewItem itemX = x as ListViewItem;
+            ListViewItem itemY = y as ListViewItem;
+
+            int result = String.Compare(itemX.SubItems[_column].Text, itemY.SubItems[_column].Text);
+
+            if (_order == SortOrder.Descending)
+                result = -result;
+
+            return result;
+        }
     }
 }

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-		<TargetFrameworks>net5.0-windows;net48;net461</TargetFrameworks>
+		<TargetFrameworks>net5.0-windows;net48;net461;net472;net481</TargetFrameworks>
 		<RuntimeIdentifier>win</RuntimeIdentifier>
       <OutputType>Library</OutputType>
       <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -50,9 +50,7 @@
       <Compile Update="Controls\MaterialCheckedListBox.cs">
         <SubType>Component</SubType>
       </Compile>
-      <Compile Update="Controls\MaterialComboBox.cs">
-        <SubType>Component</SubType>
-      </Compile>
+      <Compile Update="Controls\MaterialComboBox.cs" />
       <Compile Update="Controls\MaterialContextMenuStrip.cs">
         <SubType>Component</SubType>
       </Compile>

@@ -140,6 +140,7 @@
             _cancelButton.Top = _cancelbuttonBounds.Top;
             _cancelButton.Left = _cancelbuttonBounds.Left;  //Button minimum width management
 
+            Owner = ParentForm;
 
             //this.ShowDialog();
             //this Dispose();
@@ -147,7 +148,6 @@
         }
         public MaterialDialog(Form ParentForm, string Title, UserControl userControl)
         {
-
             _formOverlay = new Form
             {
                 BackColor = Color.Black,
@@ -177,15 +177,15 @@
             Sizable = true;
             AutoSize = true;
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
-
+            
             BackColor = SkinManager.BackgroundColor;
             FormStyle = FormStyles.ActionBar_40;
             _AnimationManager = new AnimationManager();
             _AnimationManager.AnimationType = AnimationType.EaseOut;
             _AnimationManager.Increment = 0.03;
             _AnimationManager.OnAnimationProgress += _AnimationManager_OnAnimationProgress;
-
             Controls.Add(userControl);
+
         }
 
         public MaterialDialog(Form ParentForm) : this(ParentForm, "Title", "Dialog box", "OK", false, "Cancel", false)

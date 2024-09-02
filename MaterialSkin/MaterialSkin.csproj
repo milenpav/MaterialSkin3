@@ -51,6 +51,12 @@
     <Compile Include="Controls\FlexibleMaterialDialog.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Controls\MaterialAutoCompleteComboBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\MaterialAutoCompleteComboBox.Designer.cs">
+      <DependentUpon>MaterialAutoCompleteComboBox.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\MaterialDataTable.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -188,6 +194,9 @@
     <EmbeddedResource Include="Controls\MaterialDataTable.resx">
       <DependentUpon>MaterialDataTable.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Controls\MaterialDatePicker.resx">
+      <DependentUpon>MaterialDatePicker.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\MaterialDialog.resx">
       <DependentUpon>MaterialDialog.cs</DependentUpon>
     </EmbeddedResource>
@@ -225,6 +234,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\Icons\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\search_24.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
