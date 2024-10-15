@@ -75,10 +75,10 @@
             _text = Text;
             ShowInTaskbar = false;
             Sizable = false;
+            ControlBox=true;
 
             BackColor = SkinManager.BackgroundColor;
             FormStyle = FormStyles.StatusAndActionBar_None;
-
             _AnimationManager = new AnimationManager();
             _AnimationManager.AnimationType = AnimationType.EaseOut;
             _AnimationManager.Increment = 0.03;
@@ -164,6 +164,7 @@
                 Visible = true,
                 Location = new Point(ParentForm.Location.X, ParentForm.Location.Y),
                 Anchor = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right | AnchorStyles.Bottom,
+                
             };
             Owner = ParentForm;
             _title = Title;
@@ -176,6 +177,7 @@
             ShowInTaskbar = true;
             Sizable = true;
             AutoSize = true;
+
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
             
             BackColor = SkinManager.BackgroundColor;
@@ -320,7 +322,7 @@
         {
             Close();
         }
-
+    
         protected override bool ProcessDialogKey(Keys keyData)
         {
             if (Form.ModifierKeys == Keys.None && keyData == Keys.Escape)
