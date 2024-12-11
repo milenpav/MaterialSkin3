@@ -26,6 +26,8 @@
         private Form _formOverlay;
         private String _text;
         private String _title;
+        private readonly string title;
+        private UserControl _userControl;
 
         /// <summary>
         /// The Collection for the Buttons
@@ -146,8 +148,10 @@
             //this Dispose();
             //return materialDialogResult;
         }
-        public MaterialDialog(Form ParentForm, string Title, UserControl userControl)
+        public MaterialDialog(Form ParentForm, string title, UserControl userControl)
         {
+            this.title=title;
+            _userControl = userControl;
             _formOverlay = new Form
             {
                 BackColor = Color.Black,
@@ -167,16 +171,18 @@
                 
             };
             Owner = ParentForm;
-            _title = Title;
-            if (Title.Length == 0)
+            _title = title;
+            if (title.Length == 0)
                 _header_Height = 0;
             else
                 _header_Height = 40;
 
-            _text = Text;
+            Text=title;
             ShowInTaskbar = true;
             Sizable = true;
-            AutoSize = true;
+            ControlBox=true;
+            MaximizeBox=false;
+            MinimizeBox=false;
 
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
             
@@ -186,7 +192,33 @@
             _AnimationManager.AnimationType = AnimationType.EaseOut;
             _AnimationManager.Increment = 0.03;
             _AnimationManager.OnAnimationProgress += _AnimationManager_OnAnimationProgress;
-            Controls.Add(userControl);
+            // Създаване на панел със скролиране
+            Panel scrollPanel = new Panel
+            {
+                AutoScroll = true, // Включване на скролиране
+                BackColor = SkinManager.BackgroundColor,
+                Dock = DockStyle.Fill
+            };
+
+            // Добавяне на контролата
+            scrollPanel.Controls.Add(_userControl);
+
+            // Изчисли максималния размер, базиран на работната площ на екрана
+            Size screenSize = Screen.PrimaryScreen.WorkingArea.Size;
+            Size controlSize = _userControl.Size;
+
+            // Задаване на минимален и максимален размер на формата
+            this.MinimumSize = new Size(Math.Min(controlSize.Width+20, screenSize.Width), Math.Min(controlSize.Height+_header_Height+30, screenSize.Height));
+            this.MaximumSize = screenSize;
+
+            // Ако контролата може да се побере на екрана, задавай точния ѝ размер, иначе използвай размера на екрана
+            this.Size = new Size(
+                Math.Min(controlSize.Width+20, screenSize.Width),
+                Math.Min(controlSize.Height+_header_Height+30, screenSize.Height)
+            );
+
+            // Добави панела към формата
+            Controls.Add(scrollPanel);
 
         }
 
@@ -247,6 +279,11 @@
         /// </summary>
         protected override void OnPaint(System.Windows.Forms.PaintEventArgs e)
         {
+            if (_userControl!=null)
+            {
+                base.OnPaint(e);
+                return;
+            }
 
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -298,6 +335,7 @@
                     textRect.Size,
                     NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);
             }
+           
 
         }
 
