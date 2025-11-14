@@ -75,7 +75,7 @@ namespace MaterialSkin.Controls
                         _materialListView.Items.Clear();
                         _currentSelectedIndex = -1;
                         SelectedItem = selectedItem;
-                        SelectedItemChanged.Invoke(sender, SelectedItem);
+                        SelectedItemChanged?.Invoke(sender, SelectedItem);
                     }
                 }
                 return;
