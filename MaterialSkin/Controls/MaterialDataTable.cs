@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace MaterialSkin.Controls
@@ -157,13 +160,26 @@ namespace MaterialSkin.Controls
             {
                 CopySelectedItemsToClipboard();
             }
+            else if (e.Control && e.KeyCode == Keys.A)
+            {
+                SelectAllItems();
+            }
         }
 
+        private void SelectAllItems()
+        {
+            foreach (ListViewItem item in this.Items)
+                item.Selected = true;
+        }
         private void CopySelectedItemsToClipboard()
         {
             if (SelectedItems.Count > 0)
             {
                 var sb = new System.Text.StringBuilder();
+                foreach (ColumnHeader col in Columns)
+                    sb.Append(col.Text + "\t");
+                sb.AppendLine();
+
                 foreach (ListViewItem item in SelectedItems)
                 {
                     for (int i = 0; i < item.SubItems.Count; i++)
@@ -180,6 +196,43 @@ namespace MaterialSkin.Controls
             }
         }
 
+        // Универсален метод за експортиране към Excel чрез CSV (без външни библиотеки)
+        public void ExportToCsv(string fileName = "Export")
+        {
+
+            var sb = new StringBuilder();
+
+            // Заглавия
+            foreach (ColumnHeader col in Columns)
+                sb.Append($"{col.Text},");
+            sb.Length--; // премахва последната запетая
+            sb.AppendLine();
+
+            // Данни
+            foreach (ListViewItem item in Items)
+            {
+                foreach (ListViewItem.ListViewSubItem sub in item.SubItems)
+                    sb.Append($"\"{sub.Text}\",");
+                sb.Length--;
+                sb.AppendLine();
+            }
+
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Filter = "CSV File|*.csv",
+                FileName = fileName
+            };
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                File.WriteAllText(saveFileDialog.FileName, sb.ToString(), Encoding.UTF8);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = saveFileDialog.FileName,
+                    UseShellExecute = true
+                });
+            }
+        }
+    
         private void OnColumnClick(object sender, ColumnClickEventArgs e)
         {
             if (e.Column == _sortColumn)
