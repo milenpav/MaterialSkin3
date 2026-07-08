@@ -12,6 +12,8 @@
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <RuntimeIdentifier>win</RuntimeIdentifier>
+    <RuntimeIdentifiers>win</RuntimeIdentifiers>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -30,6 +32,10 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -38,6 +44,9 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Resources.Extensions" Version="10.0.9" GeneratePathProperty="true" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Animations\AnimationDirection.cs" />
@@ -169,6 +178,7 @@
     <Compile Include="DrawHelper.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="IMaterialControl.cs" />
+    <Compile Include="MaterialDesign3Scheme.cs" />
     <Compile Include="MaterialIcon.cs" />
     <Compile Include="MaterialItemCollection.cs" />
     <Compile Include="MaterialItemCollectionEditor.cs" />

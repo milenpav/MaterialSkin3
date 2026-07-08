@@ -134,6 +134,28 @@
         {
             Graphics g = e.Graphics;
             g.Clear(Parent.BackColor);
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
+            Color textColor;
+
+            if (!Enabled)
+            {
+                textColor = SkinManager.TextDisabledOrHintColor;
+            }
+            else if (isM3)
+            {
+                textColor = UseAccent ? SkinManager.ActiveColorRoles.Primary :
+                    HighEmphasis ? SkinManager.ActiveColorRoles.OnSurface :
+                    SkinManager.ActiveColorRoles.OnSurfaceVariant;
+            }
+            else
+            {
+                textColor = HighEmphasis ? UseAccent ?
+                    SkinManager.ColorScheme.AccentColor :
+                    (SkinManager.Theme == MaterialSkin.MaterialSkinManager.Themes.LIGHT) ?
+                    SkinManager.ColorScheme.PrimaryColor :
+                    SkinManager.ColorScheme.PrimaryColor.Lighten(0.25f) :
+                    SkinManager.TextHighEmphasisColor;
+            }
 
             // Draw Text
             using (NativeTextRenderer NativeText = new NativeTextRenderer(g))
@@ -141,13 +163,7 @@
                 NativeText.DrawMultilineTransparentText(
                     Text,
                     SkinManager.getLogFontByType(_fontType),
-                    Enabled ? HighEmphasis ? UseAccent ?
-                    SkinManager.ColorScheme.AccentColor : // High emphasis, accent
-                    (SkinManager.Theme == MaterialSkin.MaterialSkinManager.Themes.LIGHT) ?
-                    SkinManager.ColorScheme.PrimaryColor : // High emphasis, primary Light theme
-                    SkinManager.ColorScheme.PrimaryColor.Lighten(0.25f) : // High emphasis, primary Dark theme
-                    SkinManager.TextHighEmphasisColor : // Normal
-                    SkinManager.TextDisabledOrHintColor, // Disabled
+                    textColor,
                     ClientRectangle.Location,
                     ClientRectangle.Size,
                     Alignment);

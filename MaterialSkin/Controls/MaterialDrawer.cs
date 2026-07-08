@@ -194,10 +194,16 @@
                 return;
 
             // Calculate lightness and color
-            float l = UseColors ? SkinManager.ColorScheme.TextColor.R / 255 : SkinManager.Theme == MaterialSkinManager.Themes.LIGHT ? 0f : 1f;
-            float r = (_highlightWithAccent ? SkinManager.ColorScheme.AccentColor.R : SkinManager.ColorScheme.PrimaryColor.R) / 255f;
-            float g = (_highlightWithAccent ? SkinManager.ColorScheme.AccentColor.G : SkinManager.ColorScheme.PrimaryColor.G) / 255f;
-            float b = (_highlightWithAccent ? SkinManager.ColorScheme.AccentColor.B : SkinManager.ColorScheme.PrimaryColor.B) / 255f;
+            Color iconDefaultColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                ? SkinManager.ActiveColorRoles.OnSurfaceVariant
+                : (UseColors ? SkinManager.ColorScheme.TextColor : (SkinManager.Theme == MaterialSkinManager.Themes.LIGHT ? Color.Black : Color.White));
+            Color iconSelectedColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                ? (_highlightWithAccent ? SkinManager.ActiveColorRoles.Secondary : SkinManager.ActiveColorRoles.Primary)
+                : (_highlightWithAccent ? SkinManager.ColorScheme.AccentColor : SkinManager.ColorScheme.PrimaryColor);
+            float l = iconDefaultColor.R / 255f;
+            float r = iconSelectedColor.R / 255f;
+            float g = iconSelectedColor.G / 255f;
+            float b = iconSelectedColor.B / 255f;
 
             // Create matrices
             float[][] matrixGray = {
@@ -448,7 +454,10 @@
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
 
             // redraw stuff
-            g.Clear(UseColors ? SkinManager.ColorScheme.PrimaryColor : SkinManager.BackdropColor);
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
+            g.Clear(isM3
+                ? (UseColors ? SkinManager.ActiveColorRoles.SurfaceContainerHigh : SkinManager.ActiveColorRoles.Surface)
+                : (UseColors ? SkinManager.ColorScheme.PrimaryColor : SkinManager.BackdropColor));
 
             if (_baseTabControl == null)
                 return;
@@ -471,10 +480,12 @@
             // Ripple
             if (_clickAnimManager.IsAnimating())
             {
-                var rippleBrush = new SolidBrush(Color.FromArgb((int)(70 - (clickAnimProgress * 70)),
-                    UseColors ? SkinManager.ColorScheme.AccentColor : // Using colors
-                    SkinManager.Theme == MaterialSkinManager.Themes.LIGHT ? SkinManager.ColorScheme.PrimaryColor : // light theme
-                    SkinManager.ColorScheme.LightPrimaryColor)); // dark theme
+                var rippleBrush = new SolidBrush(Color.FromArgb((int)((isM3 ? 18 : 70) - (clickAnimProgress * (isM3 ? 18 : 70))),
+                    isM3
+                        ? (_highlightWithAccent ? SkinManager.ActiveColorRoles.Secondary : SkinManager.ActiveColorRoles.Primary)
+                        : (UseColors ? SkinManager.ColorScheme.AccentColor :
+                            SkinManager.Theme == MaterialSkinManager.Themes.LIGHT ? SkinManager.ColorScheme.PrimaryColor :
+                            SkinManager.ColorScheme.LightPrimaryColor)));
 
                 g.SetClip(_drawerItemPaths[_baseTabControl.SelectedIndex]);
                 g.FillEllipse(rippleBrush, new Rectangle(_animationSource.X + dx - (rSize / 2), _animationSource.Y - rSize / 2, rSize, rSize));
@@ -488,22 +499,25 @@
                 var currentTabIndex = _baseTabControl.TabPages.IndexOf(tabPage);
 
                 // Background
-                Brush bgBrush = new SolidBrush(Color.FromArgb(CalculateAlpha(60, 0, currentTabIndex, clickAnimProgress, 1 - showHideAnimProgress),
-                    UseColors ? _backgroundWithAccent ? SkinManager.ColorScheme.AccentColor : SkinManager.ColorScheme.LightPrimaryColor : // using colors
-                    _backgroundWithAccent ? SkinManager.ColorScheme.AccentColor : // defaul accent
-                    SkinManager.Theme == MaterialSkinManager.Themes.LIGHT ? SkinManager.ColorScheme.PrimaryColor : // default light
-                    SkinManager.ColorScheme.LightPrimaryColor)); // default dark
+                Color selectedBackgroundColor = isM3
+                    ? (_backgroundWithAccent ? SkinManager.ActiveColorRoles.SecondaryContainer : SkinManager.ActiveColorRoles.SurfaceContainerHigh)
+                    : (UseColors ? _backgroundWithAccent ? SkinManager.ColorScheme.AccentColor : SkinManager.ColorScheme.LightPrimaryColor :
+                        _backgroundWithAccent ? SkinManager.ColorScheme.AccentColor :
+                        SkinManager.Theme == MaterialSkinManager.Themes.LIGHT ? SkinManager.ColorScheme.PrimaryColor :
+                        SkinManager.ColorScheme.LightPrimaryColor);
+                Brush bgBrush = new SolidBrush(Color.FromArgb(CalculateAlpha(isM3 ? 255 : 60, 0, currentTabIndex, clickAnimProgress, 1 - showHideAnimProgress), selectedBackgroundColor));
                 g.FillPath(bgBrush, _drawerItemPaths[currentTabIndex]);
                 bgBrush.Dispose();
 
                 // Text
-                Color textColor = Color.FromArgb(CalculateAlphaZeroWhenClosed(SkinManager.TextHighEmphasisColor.A, UseColors ? SkinManager.TextMediumEmphasisColor.A : 255, currentTabIndex, clickAnimProgress, 1 - showHideAnimProgress), // alpha
-                    UseColors ? (currentTabIndex == _baseTabControl.SelectedIndex ? (_highlightWithAccent ? SkinManager.ColorScheme.AccentColor : SkinManager.ColorScheme.PrimaryColor) // Use colors - selected
-                    : SkinManager.ColorScheme.TextColor) :  // Use colors - not selected
-                    (currentTabIndex == _baseTabControl.SelectedIndex ? (_highlightWithAccent ? SkinManager.ColorScheme.AccentColor : SkinManager.ColorScheme.PrimaryColor) : // selected
-                    SkinManager.TextHighEmphasisColor));
+                Color activeTextColor = isM3
+                    ? (_highlightWithAccent ? SkinManager.ActiveColorRoles.OnSecondaryContainer : SkinManager.ActiveColorRoles.OnSurface)
+                    : (_highlightWithAccent ? SkinManager.ColorScheme.AccentColor : SkinManager.ColorScheme.PrimaryColor);
+                Color inactiveTextColor = isM3 ? SkinManager.ActiveColorRoles.OnSurfaceVariant : (UseColors ? SkinManager.ColorScheme.TextColor : SkinManager.TextHighEmphasisColor);
+                Color textColor = Color.FromArgb(CalculateAlphaZeroWhenClosed(activeTextColor.A, inactiveTextColor.A, currentTabIndex, clickAnimProgress, 1 - showHideAnimProgress),
+                    currentTabIndex == _baseTabControl.SelectedIndex ? activeTextColor : inactiveTextColor);
 
-                IntPtr textFont = SkinManager.getLogFontByType(MaterialSkinManager.fontType.Subtitle2);
+                IntPtr textFont = SkinManager.getLogFontByType(isM3 ? MaterialSkinManager.fontType.TitleSmall : MaterialSkinManager.fontType.Subtitle2);
 
                 Rectangle textRect = _drawerItemRects[currentTabIndex];
                 textRect.X += _baseTabControl.ImageList != null ? drawerItemHeight : (int)(SkinManager.FORM_PADDING * 0.75);
@@ -551,7 +565,12 @@
             var x = ShowIconsWhenHidden ? -Location.X : 0;
             var height = drawerItemHeight;
 
-            g.FillRectangle(SkinManager.ColorScheme.AccentBrush, x, y, IndicatorWidth, height);
+            using (Brush indicatorBrush = new SolidBrush(isM3
+                ? (_highlightWithAccent ? SkinManager.ActiveColorRoles.Secondary : SkinManager.ActiveColorRoles.Primary)
+                : SkinManager.ColorScheme.AccentColor))
+            {
+                g.FillRectangle(indicatorBrush, x, y, IndicatorWidth, height);
+            }
         }
 
         public new void Show()
@@ -772,7 +791,7 @@
                     (Width + (ShowIconsWhenHidden ? Location.X : 0)) - (int)(SkinManager.FORM_PADDING * 1.5) - 1,
                     drawerItemHeight));
 
-                _drawerItemPaths[i] = DrawHelper.CreateRoundRect(new RectangleF(_drawerItemRects[i].X - 0.5f, _drawerItemRects[i].Y - 0.5f, _drawerItemRects[i].Width, _drawerItemRects[i].Height), 4);
+                _drawerItemPaths[i] = DrawHelper.CreateRoundRect(new RectangleF(_drawerItemRects[i].X - 0.5f, _drawerItemRects[i].Y - 0.5f, _drawerItemRects[i].Width, _drawerItemRects[i].Height), SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? 12 : 4);
             }
         }
     }

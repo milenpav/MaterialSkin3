@@ -160,15 +160,16 @@
         protected override void OnCreateControl()
         {
             base.OnCreateControl();
-            Font = SkinManager.getFontByType(MaterialSkinManager.fontType.Body1);
+            Font = SkinManager.getFontByType(SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? MaterialSkinManager.fontType.TitleSmall : MaterialSkinManager.fontType.Body1);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
 
-            g.Clear(SkinManager.ColorScheme.PrimaryColor);
+            g.Clear(isM3 ? SkinManager.ActiveColorRoles.Surface : SkinManager.ColorScheme.PrimaryColor);
 
             if (_baseTabControl == null) return;
 
@@ -180,7 +181,7 @@
             //Click feedback
             if (_animationManager.IsAnimating())
             {
-                var rippleBrush = new SolidBrush(Color.FromArgb((int)(51 - (animationProgress * 50)), Color.White));
+                var rippleBrush = new SolidBrush(Color.FromArgb((int)((isM3 ? 18 : 51) - (animationProgress * (isM3 ? 17 : 50))), isM3 ? SkinManager.ActiveColorRoles.Primary : Color.White));
                 var rippleSize = (int)(animationProgress * _tabRects[_baseTabControl.SelectedIndex].Width * 1.75);
 
                 g.SetClip(_tabRects[_baseTabControl.SelectedIndex]);
@@ -193,7 +194,10 @@
             if (_tab_over_index >= 0)
             { 
                 //Change mouse over tab background color
-                g.FillRectangle(SkinManager.BackgroundHoverBrush , _tabRects[_tab_over_index].X, _tabRects[_tab_over_index].Y , _tabRects[_tab_over_index].Width, _tabRects[_tab_over_index].Height - _tab_indicator_height);
+                using (Brush hoverBrush = new SolidBrush(isM3 ? SkinManager.ActiveColorRoles.SecondaryContainer.WithAlpha(110) : SkinManager.BackgroundHoverColor))
+                {
+                    g.FillRectangle(hoverBrush , _tabRects[_tab_over_index].X, _tabRects[_tab_over_index].Y , _tabRects[_tab_over_index].Width, _tabRects[_tab_over_index].Height - _tab_indicator_height);
+                }
             }
 
             foreach (TabPage tabPage in _baseTabControl.TabPages)
@@ -221,7 +225,7 @@
                             CharacterCasing == CustomCharacterCasing.Lower ? tabPage.Text.ToLower() :
                             CharacterCasing == CustomCharacterCasing.Proper ? textInfo.ToTitleCase(tabPage.Text.ToLower()) : tabPage.Text,
                             Font,
-                            Color.FromArgb(CalculateTextAlpha(currentTabIndex, animationProgress), SkinManager.ColorScheme.TextColor),
+                            Color.FromArgb(CalculateTextAlpha(currentTabIndex, animationProgress), isM3 ? (currentTabIndex == _baseTabControl.SelectedIndex ? SkinManager.ActiveColorRoles.OnSurface : SkinManager.ActiveColorRoles.OnSurfaceVariant) : SkinManager.ColorScheme.TextColor),
                             textLocation.Location,
                             textLocation.Size,
                             NativeTextRenderer.TextAlignFlags.Center | NativeTextRenderer.TextAlignFlags.Middle);
@@ -237,8 +241,8 @@
                             CharacterCasing == CustomCharacterCasing.Upper ? tabPage.Text.ToUpper() :
                             CharacterCasing == CustomCharacterCasing.Lower ? tabPage.Text.ToLower() :
                             CharacterCasing == CustomCharacterCasing.Proper ? textInfo.ToTitleCase(tabPage.Text.ToLower()) : tabPage.Text,
-                            SkinManager.getFontByType(MaterialSkinManager.fontType.Body2),
-                            Color.FromArgb(CalculateTextAlpha(currentTabIndex, animationProgress), SkinManager.ColorScheme.TextColor),
+                            SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.LabelMedium : MaterialSkinManager.fontType.Body2),
+                            Color.FromArgb(CalculateTextAlpha(currentTabIndex, animationProgress), isM3 ? (currentTabIndex == _baseTabControl.SelectedIndex ? SkinManager.ActiveColorRoles.OnSurface : SkinManager.ActiveColorRoles.OnSurfaceVariant) : SkinManager.ColorScheme.TextColor),
                             textLocation.Location,
                             textLocation.Size,
                             NativeTextRenderer.TextAlignFlags.Center | NativeTextRenderer.TextAlignFlags.Middle);
@@ -273,7 +277,10 @@
             var x = previousActiveTabRect.X + (int)((activeTabPageRect.X - previousActiveTabRect.X) * animationProgress);
             var width = previousActiveTabRect.Width + (int)((activeTabPageRect.Width - previousActiveTabRect.Width) * animationProgress);
 
-            g.FillRectangle(SkinManager.ColorScheme.AccentBrush, x, y, width, _tab_indicator_height);
+            using (Brush indicatorBrush = new SolidBrush(isM3 ? SkinManager.ActiveColorRoles.Primary : SkinManager.ColorScheme.AccentColor))
+            {
+                g.FillRectangle(indicatorBrush, x, y, width, _tab_indicator_height);
+            }
         }
 
         private int CalculateTextAlpha(int tabIndex, double animationProgress)

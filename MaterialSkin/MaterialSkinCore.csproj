@@ -1,7 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
+	<PropertyGroup>
 		<TargetFrameworks>net5.0-windows;net48;net461;net472;net481</TargetFrameworks>
 		<RuntimeIdentifier>win</RuntimeIdentifier>
+		<BaseIntermediateOutputPath>obj\MaterialSkinCore\</BaseIntermediateOutputPath>
+		<MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+		<BaseOutputPath>bin\MaterialSkinCore\</BaseOutputPath>
       <OutputType>Library</OutputType>
       <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<UseWindowsForms>true</UseWindowsForms>

@@ -50,9 +50,15 @@ namespace MaterialSkin.Controls
         {
             _headerPanel = new FlowLayoutPanel();
             _headerPanel.Dock = DockStyle.Top;
-            _headerPanel.Height = 50;
-            _headerPanel.AutoSize = true;
-            _headerPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            _headerPanel.Height = 72;
+            _headerPanel.AutoSize = false;
+            _headerPanel.WrapContents = false;
+            _headerPanel.FlowDirection = FlowDirection.LeftToRight;
+            _headerPanel.Padding = new Padding(16, 12, 16, 8);
+            if (MaterialSkinManager.Instance.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3)
+            {
+                _headerPanel.BackColor = MaterialSkinManager.Instance.ActiveColorRoles.Surface;
+            }
             this.HandleCreated += (sender, e) =>
             {
                 var parentControl = this.Parent;
@@ -63,18 +69,21 @@ namespace MaterialSkin.Controls
 
                     _headerLabel = new MaterialLabel()
                     {
-                        Margin = new Padding(10, 0, 0, 0),
+                        Margin = new Padding(0, 6, 16, 0),
                         Text = _heading,
                         Anchor = AnchorStyles.None,
                         AutoSize =true,
-                        FontType = MaterialSkinManager.fontType.H5
+                        FontType = MaterialSkinManager.Instance.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                            ? MaterialSkinManager.fontType.TitleLarge
+                            : MaterialSkinManager.fontType.H5
                     };
                     _headerPanel.Controls.Add(_headerLabel);
 
                     _searchTextBox = new MaterialTextBox2()
                     {
-                        Margin = new Padding(10, 0, 0, 0),
-                        Hint="Търсене..."
+                        Margin = new Padding(0, 0, 0, 0),
+                        Hint="Търсене...",
+                        Width = 336
                     };
                     _searchTextBox.TextChanged += ColumnSearchTextBox_TextChanged;
                     _headerPanel.Controls.Add(_searchTextBox);
@@ -87,9 +96,15 @@ namespace MaterialSkin.Controls
         {
             _footerPanel = new FlowLayoutPanel();
             _footerPanel.Dock = DockStyle.Bottom;
-            _footerPanel.Height = 50;
-            _footerPanel.AutoSize = true;
-            _footerPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            _footerPanel.Height = 52;
+            _footerPanel.AutoSize = false;
+            _footerPanel.WrapContents = false;
+            _footerPanel.FlowDirection = FlowDirection.LeftToRight;
+            _footerPanel.Padding = new Padding(16, 10, 16, 8);
+            if (MaterialSkinManager.Instance.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3)
+            {
+                _footerPanel.BackColor = MaterialSkinManager.Instance.ActiveColorRoles.Surface;
+            }
             this.HandleCreated += (sender, e) =>
             {
                 var parentControl = this.Parent;
@@ -102,8 +117,10 @@ namespace MaterialSkin.Controls
                         Text = $"Заредени: {Items.Count} бр.",
                         Anchor = AnchorStyles.None,
                         AutoSize =true,
-                        Margin = new Padding(10, 0, 0, 0),
-                        FontType = MaterialSkinManager.fontType.H6
+                        Margin = new Padding(0, 2, 0, 0),
+                        FontType = MaterialSkinManager.Instance.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                            ? MaterialSkinManager.fontType.BodyMedium
+                            : MaterialSkinManager.fontType.H6
                     };
                     _footerPanel.Controls.Add(_itemCountLabel);
                 }

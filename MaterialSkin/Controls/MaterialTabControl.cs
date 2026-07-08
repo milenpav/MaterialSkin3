@@ -30,7 +30,11 @@
         {
             base.OnControlAdded(e);
 
-            e.Control.BackColor = System.Drawing.Color.White;
+            if (e.Control is TabPage tabPage)
+            {
+                tabPage.BackColor = SkinManager.BackgroundColor;
+                tabPage.ForeColor = SkinManager.TextHighEmphasisColor;
+            }
         }
     }
 }

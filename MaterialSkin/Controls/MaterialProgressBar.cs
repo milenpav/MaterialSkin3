@@ -28,12 +28,21 @@
 
         protected override void OnPaint(PaintEventArgs e)
         {
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
             var doneProgress = (int)(Width * ((double)Value / Maximum));
-            e.Graphics.FillRectangle(Enabled ? 
-                SkinManager.ColorScheme.PrimaryBrush :
-                new SolidBrush(DrawHelper.BlendColor(SkinManager.ColorScheme.PrimaryColor, SkinManager.SwitchOffDisabledThumbColor, 197)),
-                0, 0, doneProgress, Height);
-            e.Graphics.FillRectangle(SkinManager.BackgroundFocusBrush, doneProgress, 0, Width - doneProgress, Height);
+            using (var progressBrush = new SolidBrush(Enabled
+                ? (isM3 ? SkinManager.ActiveColorRoles.Primary : SkinManager.ColorScheme.PrimaryColor)
+                : DrawHelper.BlendColor(
+                    isM3 ? SkinManager.ActiveColorRoles.Primary : SkinManager.ColorScheme.PrimaryColor,
+                    SkinManager.SwitchOffDisabledThumbColor,
+                    197)))
+            using (var trackBrush = new SolidBrush(isM3
+                ? SkinManager.ActiveColorRoles.SurfaceContainerHigh
+                : SkinManager.BackgroundFocusColor))
+            {
+                e.Graphics.FillRectangle(progressBrush, 0, 0, doneProgress, Height);
+                e.Graphics.FillRectangle(trackBrush, doneProgress, 0, Width - doneProgress, Height);
+            }
         }
     }
 }

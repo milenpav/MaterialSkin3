@@ -40,7 +40,9 @@
             AnimationManager.OnAnimationProgress += sender => Invalidate();
             AnimationManager.OnAnimationFinished += sender => OnItemClicked(_delayesArgs);
 
-            BackColor = SkinManager.BackdropColor;
+            BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                ? SkinManager.ActiveColorRoles.SurfaceContainer
+                : SkinManager.BackdropColor;
         }
 
         protected override void OnMouseUp(MouseEventArgs mea)
@@ -119,7 +121,11 @@
             using (NativeTextRenderer NativeText = new NativeTextRenderer(g))
             {
                 NativeText.DrawTransparentText(e.Text, SkinManager.getLogFontByType(MaterialSkinManager.fontType.Body2),
-                    e.Item.Enabled ? SkinManager.TextHighEmphasisColor : SkinManager.TextDisabledOrHintColor,
+                    e.Item.Enabled
+                        ? (SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                            ? SkinManager.ActiveColorRoles.OnSurface
+                            : SkinManager.TextHighEmphasisColor)
+                        : SkinManager.TextDisabledOrHintColor,
                     textRect.Location,
                     textRect.Size,
                     NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);
@@ -129,11 +135,19 @@
         protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
         {
             var g = e.Graphics;
-            g.Clear(SkinManager.BackgroundColor);
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
+            var roles = SkinManager.ActiveColorRoles;
+            g.Clear(isM3 ? roles.SurfaceContainer : SkinManager.BackgroundColor);
 
             //Draw background
             var itemRect = GetItemRect(e.Item);
-            g.FillRectangle(e.Item.Selected && e.Item.Enabled ? SkinManager.BackgroundFocusBrush : SkinManager.BackgroundBrush, itemRect);
+            using (var itemBrush = new SolidBrush(
+                e.Item.Selected && e.Item.Enabled
+                    ? (isM3 ? Color.FromArgb(20, roles.Primary) : SkinManager.BackgroundFocusColor)
+                    : (isM3 ? roles.SurfaceContainer : SkinManager.BackgroundColor)))
+            {
+                g.FillRectangle(itemBrush, itemRect);
+            }
 
             //Ripple animation
             var toolStrip = e.ToolStrip as MaterialContextMenuStrip;
@@ -146,9 +160,12 @@
                     for (int i = 0; i < animationManager.GetAnimationCount(); i++)
                     {
                         var animationValue = animationManager.GetProgress(i);
-                        var rippleBrush = new SolidBrush(Color.FromArgb((int)(51 - (animationValue * 50)), Color.Black));
+                        var rippleBrush = new SolidBrush(Color.FromArgb(
+                            isM3 ? (int)(24 - (animationValue * 23)) : (int)(51 - (animationValue * 50)),
+                            isM3 ? roles.Primary : Color.Black));
                         var rippleSize = (int)(animationValue * itemRect.Width * 2.5);
                         g.FillEllipse(rippleBrush, new Rectangle(animationSource.X - rippleSize / 2, itemRect.Y - itemRect.Height, rippleSize, itemRect.Height * 3));
+                        rippleBrush.Dispose();
                     }
                 }
             }
@@ -161,17 +178,25 @@
         protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
         {
             var g = e.Graphics;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
+            var roles = SkinManager.ActiveColorRoles;
 
-            g.FillRectangle(SkinManager.BackgroundBrush, e.Item.Bounds);
-            g.DrawLine(
-                new Pen(SkinManager.DividersColor),
+            using (var backgroundBrush = new SolidBrush(isM3 ? roles.SurfaceContainer : SkinManager.BackgroundColor))
+            using (var separatorPen = new Pen(isM3 ? roles.OutlineVariant : SkinManager.DividersColor))
+            {
+                g.FillRectangle(backgroundBrush, e.Item.Bounds);
+                g.DrawLine(
+                separatorPen,
                 new Point(e.Item.Bounds.Left, e.Item.Bounds.Height / 2),
                 new Point(e.Item.Bounds.Right, e.Item.Bounds.Height / 2));
+            }
         }
 
         protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
         {
-            e.ToolStrip.BackColor = SkinManager.BackgroundColor;
+            e.ToolStrip.BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                ? SkinManager.ActiveColorRoles.SurfaceContainer
+                : SkinManager.BackgroundColor;
         }
 
         protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)

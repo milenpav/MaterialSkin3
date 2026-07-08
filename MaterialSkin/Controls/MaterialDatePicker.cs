@@ -81,6 +81,8 @@ namespace MaterialSkin.Controls
             // Инициализация и настройка на бутона
             btnToday = new MaterialButton();
             btnToday.Text = "Днес";
+            btnToday.Type = MaterialButton.MaterialButtonType.Tonal;
+            btnToday.HighEmphasis = true;
             btnToday.Size = new Size(Width - 20, 30);
             btnToday.Dock = DockStyle.Bottom;
             btnToday.Location = new Point(10, Height - 40); // Разполагаме бутона в долната част
@@ -104,7 +106,6 @@ namespace MaterialSkin.Controls
 
             for (int i = 1; i < 7; i++)
             {
-                DateRectangles.Add(new List<DateRect>());
                 for (int j = 0; j < 7; j++)
                 {
                     if (DateRectangles[i][j].Drawn)
@@ -234,36 +235,64 @@ namespace MaterialSkin.Controls
             base.OnPaint(e);
 
             Graphics g = e.Graphics;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
+            var roles = SkinManager.ActiveColorRoles;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
-            HoverBrush = new SolidBrush(Color.FromArgb(100, SkinManager.ColorScheme.PrimaryColor));
+            HoverBrush = new SolidBrush(isM3
+                ? Color.FromArgb(52, roles.Primary)
+                : Color.FromArgb(100, SkinManager.ColorScheme.PrimaryColor));
 
-
-
-            g.FillRectangle(SkinManager.ColorScheme.DarkPrimaryBrush, TopDayRect);
-            g.FillRectangle(SkinManager.ColorScheme.PrimaryBrush, TopDateRect);
+            using (var topDayBrush = new SolidBrush(isM3 ? roles.SurfaceContainerHigh : SkinManager.ColorScheme.DarkPrimaryColor))
+            using (var topDateBrush = new SolidBrush(isM3 ? roles.PrimaryContainer : SkinManager.ColorScheme.PrimaryColor))
+            {
+                g.FillRectangle(topDayBrush, TopDayRect);
+                g.FillRectangle(topDateBrush, TopDateRect);
+            }
 
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
+            var topDayTextColor = isM3 ? roles.OnSurfaceVariant : SkinManager.TextMediumEmphasisColor;
+            var topDateTextColor = isM3 ? roles.OnPrimaryContainer : SkinManager.TextMediumEmphasisColor;
+            var yearTextColor = isM3 ? roles.OnSurfaceVariant : Color.FromArgb(80, SkinManager.DividersAlternativeColor);
+            var calendarHeaderTextColor = isM3 ? roles.OnSurface : SkinManager.TextMediumEmphasisColor;
 
-            g.DrawString(CurrentDate.ToString("dddd"), TopDayFont, SkinManager.TextMediumEmphasisBrush, TopDayRect, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
-            g.DrawString(CurrentDate.ToString("MMMM"), MonthFont, SkinManager.TextMediumEmphasisBrush, MonthRect, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Far });
-            g.DrawString(CurrentDate.ToString("dd"), DayFont, SkinManager.TextMediumEmphasisBrush, DayRect, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
-            g.DrawString(CurrentDate.ToString("yyyy"), YeahrFont, new SolidBrush(Color.FromArgb(80, SkinManager.DividersAlternativeColor)), YearRect, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
-
-            g.DrawString(CurrentDate.ToString("MMMM"), SkinManager.getFontByType(MaterialSkinManager.fontType.Body1), SkinManager.TextMediumEmphasisBrush, CurrentCal_Header, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+            using (var topDayTextBrush = new SolidBrush(topDayTextColor))
+            using (var topDateTextBrush = new SolidBrush(topDateTextColor))
+            using (var yearTextBrush = new SolidBrush(yearTextColor))
+            using (var calendarHeaderTextBrush = new SolidBrush(calendarHeaderTextColor))
+            {
+                g.DrawString(CurrentDate.ToString("dddd"),
+                    SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.LabelLarge : MaterialSkinManager.fontType.H6),
+                    topDayTextBrush, TopDayRect, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+                g.DrawString(CurrentDate.ToString("MMMM"),
+                    SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.TitleLarge : MaterialSkinManager.fontType.H5),
+                    topDateTextBrush, MonthRect, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Far });
+                g.DrawString(CurrentDate.ToString("dd"),
+                    SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.DisplaySmall : MaterialSkinManager.fontType.H3),
+                    topDateTextBrush, DayRect, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+                g.DrawString(CurrentDate.ToString("yyyy"),
+                    SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.TitleMedium : MaterialSkinManager.fontType.H5),
+                    yearTextBrush, YearRect, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+                g.DrawString(CurrentDate.ToString("MMMM"),
+                    SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.TitleMedium : MaterialSkinManager.fontType.Body1),
+                    calendarHeaderTextBrush, CurrentCal_Header, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+            }
 
             if (HoverX >= 0)
             {
                 g.FillEllipse(HoverBrush, DateRectangles[HoverX][HoverY].Rect);
             }
 
-            g.FillEllipse(SkinManager.ColorScheme.PrimaryBrush, DateRectangles[SelectedX][SelectedY].Rect);
+            using (var selectedDateBrush = new SolidBrush(isM3 ? roles.Primary : SkinManager.ColorScheme.PrimaryColor))
+            {
+                g.FillEllipse(selectedDateBrush, DateRectangles[SelectedX][SelectedY].Rect);
+            }
             if (recentHovered) g.FillEllipse(HoverBrush, PreviousCal);
 
             if (nextHovered) g.FillEllipse(HoverBrush, NextCal);
 
-            using (var ButtonPen = new Pen(SkinManager.TextMediumEmphasisBrush, 2))
+            using (var ButtonPen = new Pen(isM3 ? roles.OnSurfaceVariant : SkinManager.TextMediumEmphasisColor, 2))
             {
 
                 g.DrawLine(ButtonPen,
@@ -299,7 +328,14 @@ namespace MaterialSkin.Controls
                 if (DayOfWeek < 0) DayOfWeek = 6;
 
                 strName = DateTime.Now.AddDays(-DayOfWeek+i).ToString("ddd");
-                g.DrawString(strName, SkinManager.getFontByType(MaterialSkinManager.fontType.Body1), SkinManager.TextMediumEmphasisBrush, DateRectangles[0][i].Rect, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+                using (var weekDayBrush = new SolidBrush(isM3 ? roles.OnSurfaceVariant : SkinManager.TextMediumEmphasisColor))
+                {
+                    g.DrawString(strName,
+                        SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.LabelMedium : MaterialSkinManager.fontType.Body1),
+                        weekDayBrush,
+                        DateRectangles[0][i].Rect,
+                        new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+                }
             }
             for (DateTime date = FirstDay; date <= LastDayOfMonth(CurrentDate); date = date.AddDays(1))
             {
@@ -307,7 +343,17 @@ namespace MaterialSkin.Controls
                 int DayOfWeek = (int)date.DayOfWeek - 1;
                 if (DayOfWeek < 0) DayOfWeek = 6;
 
-                g.DrawString(date.Day.ToString(), SkinManager.getFontByType(MaterialSkinManager.fontType.Body1), SkinManager.TextMediumEmphasisBrush, DateRectangles[WeekOfMonth][DayOfWeek].Rect, new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+                bool isSelected = WeekOfMonth == SelectedX && DayOfWeek == SelectedY;
+                using (var dateBrush = new SolidBrush(isSelected
+                    ? (isM3 ? roles.OnPrimary : Color.White)
+                    : (isM3 ? roles.OnSurface : SkinManager.TextMediumEmphasisColor)))
+                {
+                    g.DrawString(date.Day.ToString(),
+                        SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body1),
+                        dateBrush,
+                        DateRectangles[WeekOfMonth][DayOfWeek].Rect,
+                        new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+                }
 
             }
 

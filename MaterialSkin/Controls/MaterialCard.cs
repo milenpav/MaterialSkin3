@@ -21,7 +21,7 @@
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
             Paint += new PaintEventHandler(paintControl);
-            BackColor = SkinManager.BackgroundColor;
+            BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? SkinManager.CardsColor : SkinManager.BackgroundColor;
             ForeColor = SkinManager.TextHighEmphasisColor;
             Margin = new Padding(SkinManager.FORM_PADDING);
             Padding = new Padding(SkinManager.FORM_PADDING);
@@ -32,6 +32,11 @@
             if (Parent == null)
             {
                 RemoveShadowPaintEvent((Control)sender, drawShadowOnParent);
+                return;
+            }
+
+            if (SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3)
+            {
                 return;
             }
 
@@ -89,7 +94,7 @@
         protected override void OnBackColorChanged(EventArgs e)
         {
             base.OnBackColorChanged(e);
-            BackColor = SkinManager.BackgroundColor;
+            BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? SkinManager.CardsColor : SkinManager.BackgroundColor;
         }
 
         private void paintControl(Object sender, PaintEventArgs e)
@@ -103,15 +108,27 @@
             RectangleF cardRectF = new RectangleF(ClientRectangle.Location, ClientRectangle.Size);
             cardRectF.X -= 0.5f;
             cardRectF.Y -= 0.5f;
-            GraphicsPath cardPath = DrawHelper.CreateRoundRect(cardRectF, 4);
-
-            // button shadow (blend with form shadow)
-            DrawHelper.DrawSquareShadow(g, ClientRectangle);
-
-            // Draw card
-            using (SolidBrush normalBrush = new SolidBrush(BackColor))
+            int radius = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? 12 : 4;
+            using (GraphicsPath cardPath = DrawHelper.CreateRoundRect(cardRectF, radius))
             {
-                g.FillPath(normalBrush, cardPath);
+                if (SkinManager.DesignVersion != MaterialSkinManager.MaterialDesignVersion.Material3)
+                {
+                    DrawHelper.DrawSquareShadow(g, ClientRectangle);
+                }
+
+                // Draw card
+                using (SolidBrush normalBrush = new SolidBrush(BackColor))
+                {
+                    g.FillPath(normalBrush, cardPath);
+                }
+
+                if (SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3)
+                {
+                    using (Pen outlinePen = new Pen(SkinManager.ActiveColorRoles.OutlineVariant, 1))
+                    {
+                        g.DrawPath(outlinePen, cardPath);
+                    }
+                }
             }
         }
     }

@@ -81,6 +81,21 @@
             return Color.FromArgb(color.R, color.G, color.B);
         }
 
+        public static Color WithAlpha(this Color color, int alpha)
+        {
+            alpha = Math.Max(0, Math.Min(255, alpha));
+            return Color.FromArgb(alpha, color.R, color.G, color.B);
+        }
+
+        public static bool IsDark(this Color color)
+        {
+            double luminance =
+                ((0.299d * color.R) +
+                 (0.587d * color.G) +
+                 (0.114d * color.B)) / 255d;
+            return luminance < 0.5d;
+        }
+
         public static int PercentageToColorComponent(this int percentage)
         {
             return (int)((percentage / 100d) * 255d);

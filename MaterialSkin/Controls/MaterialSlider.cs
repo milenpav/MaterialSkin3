@@ -356,6 +356,8 @@ namespace MaterialSkin.Controls
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
+            var roles = SkinManager.ActiveColorRoles;
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
             g.Clear(Parent.BackColor);
@@ -368,7 +370,9 @@ namespace MaterialSkin.Controls
             Color _thumbHoverColor;
             Color _thumbPressedColor;
 
-            if (_useAccentColor)
+            if (isM3)
+                _accentColor = _useAccentColor ? roles.Secondary : roles.Primary;
+            else if (_useAccentColor)
                 _accentColor = SkinManager.ColorScheme.AccentColor;
             else
                 _accentColor = SkinManager.ColorScheme.PrimaryColor;
@@ -376,7 +380,12 @@ namespace MaterialSkin.Controls
             _accentBrush = new SolidBrush(_accentColor);
             _disabledBrush = new SolidBrush(Color.FromArgb(255, 158, 158, 158));
 
-            if (SkinManager.Theme == MaterialSkinManager.Themes.DARK)
+            if (isM3)
+            {
+                _disabledColor = roles.OutlineVariant;
+                _inactiveTrackColor = roles.SurfaceVariant;
+            }
+            else if (SkinManager.Theme == MaterialSkinManager.Themes.DARK)
             {
                 _disabledColor = Color.FromArgb((int)(2.55 * 30), 255, 255, 255);
                 _inactiveTrackColor = _accentColor.Darken(0.25f);
@@ -390,8 +399,8 @@ namespace MaterialSkin.Controls
             //_disabledBrush = new SolidBrush(_disabledColor);
             //_thumbHoverColor = Color.FromArgb((int)(2.55 * 15), (Value == 0 ? Color.Gray : _accentColor));
             //_thumbPressedColor = Color.FromArgb((int)(2.55 * 30), (Value == 0 ? Color.Gray : _accentColor));            _thumbHoverColor = Color.FromArgb((int)(2.55 * 15), (Value == 0 ? Color.Gray : _accentColor));
-            _thumbHoverColor = Color.FromArgb((int)(2.55 * 15),  _accentColor);
-            _thumbPressedColor = Color.FromArgb((int)(2.55 * 30), _accentColor);
+            _thumbHoverColor = Color.FromArgb(isM3 ? 20 : (int)(2.55 * 15), _accentColor);
+            _thumbPressedColor = Color.FromArgb(isM3 ? 32 : (int)(2.55 * 30), _accentColor);
             //Pen LinePen = new Pen(_disabledColor, _inactiveTrack);
 
             //Draw track
@@ -399,13 +408,15 @@ namespace MaterialSkin.Controls
             //g.DrawLine(LinePen, _sliderRectangle.X + (_indicatorSize / 2), Height / 2 , _sliderRectangle.Right - (_indicatorSize / 2), Height / 2 );
 
             GraphicsPath _inactiveTrackPath = DrawHelper.CreateRoundRect(_sliderRectangle.X + (_thumbRadius / 2), _sliderRectangle.Y + Height / 2 - _inactiveTrack/2, _sliderRectangle.Width - _thumbRadius, _inactiveTrack, 2);
-            //g.FillPath(_disabledBrush, _inactiveTrackPath);
-                GraphicsPath _activeTrackPath = DrawHelper.CreateRoundRect(_sliderRectangle.X + (_thumbRadius / 2), _sliderRectangle.Y + Height / 2 - _activeTrack / 2, _indicatorRectangleNormal.X - _sliderRectangle.X, _activeTrack, 2);
+            GraphicsPath _activeTrackPath = DrawHelper.CreateRoundRect(_sliderRectangle.X + (_thumbRadius / 2), _sliderRectangle.Y + Height / 2 - _activeTrack / 2, _indicatorRectangleNormal.X - _sliderRectangle.X, _activeTrack, 2);
 
             if (Enabled)
             {
                 //Draw inactive track
-                g.FillPath(new SolidBrush(_inactiveTrackColor), _inactiveTrackPath);
+                using (var inactiveTrackBrush = new SolidBrush(_inactiveTrackColor))
+                {
+                    g.FillPath(inactiveTrackBrush, _inactiveTrackPath);
+                }
 
                 //Draw active track
                 //g.DrawLine(SkinManager.ColorScheme.AccentPen, _indicatorSize / 2, Height / 2 + (Height - _indicatorSize) / 2, _indicatorRectangleNormal.X, Height / 2 + (Height - _indicatorSize) / 2);
@@ -417,7 +428,10 @@ namespace MaterialSkin.Controls
                 {
                     //g.FillEllipse(_accentBrush, _indicatorRectanglePressed);
                     g.FillEllipse(_accentBrush, _indicatorRectangleNormal);
-                    g.FillEllipse(new SolidBrush(_thumbPressedColor), _indicatorRectanglePressed);
+                    using (var pressedBrush = new SolidBrush(_thumbPressedColor))
+                    {
+                        g.FillEllipse(pressedBrush, _indicatorRectanglePressed);
+                    }
 
                 }
                 else
@@ -426,14 +440,20 @@ namespace MaterialSkin.Controls
 
                     if (_hovered)
                     {
-                        g.FillEllipse(new SolidBrush(_thumbHoverColor), _indicatorRectanglePressed);
+                        using (var hoverBrush = new SolidBrush(_thumbHoverColor))
+                        {
+                            g.FillEllipse(hoverBrush, _indicatorRectanglePressed);
+                        }
                     }
                 }
             }
             else
             {
                 //Draw inactive track
-                g.FillPath(new SolidBrush(_disabledColor.Lighten(0.25f)), _inactiveTrackPath);
+                using (var disabledTrackBrush = new SolidBrush(isM3 ? roles.SurfaceVariant : _disabledColor.Lighten(0.25f)))
+                {
+                    g.FillPath(disabledTrackBrush, _inactiveTrackPath);
+                }
 
                 //Draw active track
                 g.FillPath(_disabledBrush, _activeTrackPath);
@@ -447,7 +467,9 @@ namespace MaterialSkin.Controls
                     NativeText.DrawTransparentText(
                     Text,
                     SkinManager.getLogFontByType(_fontType),
-                    Enabled ? SkinManager.TextHighEmphasisColor : SkinManager.TextDisabledOrHintColor,
+                    Enabled
+                        ? (isM3 ? roles.OnSurface : SkinManager.TextHighEmphasisColor)
+                        : SkinManager.TextDisabledOrHintColor,
                     _textRectangle.Location,
                     _textRectangle.Size,
                     NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);
@@ -457,12 +479,18 @@ namespace MaterialSkin.Controls
                 NativeText.DrawTransparentText(
                     Value.ToString()+ValueSuffix,
                     SkinManager.getLogFontByType(_fontType),
-                    Enabled ? SkinManager.TextHighEmphasisColor : SkinManager.TextDisabledOrHintColor,
+                    Enabled
+                        ? (isM3 ? roles.OnSurfaceVariant : SkinManager.TextHighEmphasisColor)
+                        : SkinManager.TextDisabledOrHintColor,
                     _valueRectangle.Location,
                     _valueRectangle.Size,
                     NativeTextRenderer.TextAlignFlags.Right | NativeTextRenderer.TextAlignFlags.Middle);
             }
 
+            _accentBrush.Dispose();
+            _disabledBrush.Dispose();
+            _inactiveTrackPath.Dispose();
+            _activeTrackPath.Dispose();
         }
     }
 

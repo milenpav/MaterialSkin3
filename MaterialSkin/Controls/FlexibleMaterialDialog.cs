@@ -108,7 +108,7 @@ namespace MaterialSkin.Controls
             this.messageContainer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.messageContainer.BackColor = System.Drawing.Color.White;
+            this.messageContainer.BackColor = this.materialSkinManager.BackgroundColor;
             this.messageContainer.Controls.Add(this.materialLabel1);
             this.messageContainer.Controls.Add(this.pictureBoxForIcon);
             this.messageContainer.Controls.Add(this.richTextBoxMessage);
@@ -147,12 +147,12 @@ namespace MaterialSkin.Controls
             this.richTextBoxMessage.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.richTextBoxMessage.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.richTextBoxMessage.BackColor = this.materialSkinManager.BackgroundColor;
             this.richTextBoxMessage.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.richTextBoxMessage.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.FlexibleMaterialFormBindingSource, "MessageText", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.richTextBoxMessage.Depth = 0;
             this.richTextBoxMessage.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.richTextBoxMessage.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(222)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.richTextBoxMessage.ForeColor = this.materialSkinManager.TextHighEmphasisColor;
             this.richTextBoxMessage.Location = new System.Drawing.Point(56, 12);
             this.richTextBoxMessage.Margin = new System.Windows.Forms.Padding(0);
             this.richTextBoxMessage.MouseState = MaterialSkin.MouseState.HOVER;
@@ -236,7 +236,7 @@ namespace MaterialSkin.Controls
             // 
             // FlexibleMaterialForm
             // 
-            this.BackColor = System.Drawing.Color.White;
+            this.BackColor = this.materialSkinManager.BackgroundColor;
             this.ClientSize = new System.Drawing.Size(384, 208);
             this.Controls.Add(this.leftButton);
             this.Controls.Add(this.middleButton);

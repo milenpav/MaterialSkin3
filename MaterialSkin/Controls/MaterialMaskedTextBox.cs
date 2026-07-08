@@ -1465,17 +1465,46 @@
         protected override void OnPaint(PaintEventArgs pevent)
         {
             var g = pevent.Graphics;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
             g.Clear(Parent.BackColor);
-            SolidBrush backBrush = new SolidBrush(DrawHelper.BlendColor(Parent.BackColor, SkinManager.BackgroundAlternativeColor, SkinManager.BackgroundAlternativeColor.A));
-            
-            //backColor
-            g.FillRectangle(
-                !Enabled ? SkinManager.BackgroundDisabledBrush : // Disabled
-                isFocused ? SkinManager.BackgroundFocusBrush :  // Focused
-                MouseState == MouseState.HOVER && (!ReadOnly || (ReadOnly && !AnimateReadOnly)) ? SkinManager.BackgroundHoverBrush : // Hover
-                backBrush, // Normal
-                ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, LINE_Y);
+            Color fillColor = !Enabled
+                ? SkinManager.BackgroundDisabledColor
+                : isFocused
+                    ? SkinManager.BackgroundFocusColor
+                    : MouseState == MouseState.HOVER && (!ReadOnly || (ReadOnly && !AnimateReadOnly))
+                        ? SkinManager.BackgroundHoverColor
+                        : DrawHelper.BlendColor(Parent.BackColor, SkinManager.BackgroundAlternativeColor, SkinManager.BackgroundAlternativeColor.A);
+
+            if (isM3)
+            {
+                using (var fieldPath = DrawHelper.CreateRoundRect(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, LINE_Y, 12))
+                using (var fillBrush = new SolidBrush(fillColor))
+                {
+                    g.FillPath(fillBrush, fieldPath);
+                    float outlineWidth = isFocused || _errorState ? 2f : 1f;
+                    float outlineInset = outlineWidth <= 1f ? 0.5f : 1f;
+                    RectangleF outlineBounds = new RectangleF(
+                        outlineInset,
+                        outlineInset,
+                        Width - (outlineInset * 2) - 1,
+                        LINE_Y - (outlineInset * 2) - 1);
+                    using (var outlinePath = DrawHelper.CreateRoundRect(outlineBounds, 12))
+                    using (var outlinePen = new Pen(_errorState ? SkinManager.ActiveColorRoles.Error : isFocused ? (UseAccent ? SkinManager.ActiveColorRoles.Secondary : SkinManager.ActiveColorRoles.Primary) : SkinManager.ActiveColorRoles.OutlineVariant, outlineWidth))
+                    {
+                        g.DrawPath(outlinePen, outlinePath);
+                    }
+                }
+            }
+            else
+            {
+                using (SolidBrush backBrush = new SolidBrush(fillColor))
+                {
+                    g.FillRectangle(backBrush, ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, LINE_Y);
+                }
+            }
 
             baseTextBox.BackColor = !Enabled ? ColorHelper.RemoveAlpha(SkinManager.BackgroundDisabledColor, BackColor) : //Disabled
                 isFocused ? DrawHelper.BlendColor(BackColor, SkinManager.BackgroundFocusColor, SkinManager.BackgroundFocusColor.A) : //Focused
@@ -1505,9 +1534,15 @@
             Rectangle helperTextRect = new Rectangle(LEFT_PADDING - _prefix_padding, LINE_Y + ACTIVATION_INDICATOR_HEIGHT, Width - (LEFT_PADDING - _prefix_padding) - _right_padding, HELPER_TEXT_HEIGHT);
             Rectangle hintRect = new Rectangle(_left_padding - _prefix_padding, HINT_TEXT_SMALL_Y, Width - (_left_padding - _prefix_padding) - _right_padding, HINT_TEXT_SMALL_SIZE);
             int hintTextSize = 12;
+            Color fieldAccentColor = UseAccent ? (isM3 ? SkinManager.ActiveColorRoles.Secondary : SkinManager.ColorScheme.AccentColor) : (isM3 ? SkinManager.ActiveColorRoles.Primary : SkinManager.ColorScheme.PrimaryColor);
+            Color helperColor = isM3 ? SkinManager.ActiveColorRoles.OnSurfaceVariant : SkinManager.TextMediumEmphasisColor;
+            Color errorColor = isM3 ? SkinManager.ActiveColorRoles.Error : SkinManager.BackgroundHoverRedColor;
 
             // bottom line base
-            g.FillRectangle(SkinManager.DividersAlternativeBrush, 0, LINE_Y, Width, 1);
+            if (!isM3)
+            {
+                g.FillRectangle(SkinManager.DividersAlternativeBrush, 0, LINE_Y, Width, 1);
+            }
 
             if (ReadOnly == false || (ReadOnly && AnimateReadOnly))
             {
@@ -1516,7 +1551,7 @@
                     // No animation
 
                     // bottom line
-                    if (isFocused)
+                    if (!isM3 && isFocused)
                     {
                         g.FillRectangle(_errorState ? SkinManager.BackgroundHoverRedBrush : isFocused ? UseAccent ? SkinManager.ColorScheme.AccentBrush : SkinManager.ColorScheme.PrimaryBrush : SkinManager.DividersBrush, 0, LINE_Y, Width, isFocused ? 2 : 1);
                     }
@@ -1527,9 +1562,12 @@
                     double animationProgress = _animationManager.GetProgress();
 
                     // Line Animation
-                    int LineAnimationWidth = (int)(Width * animationProgress);
-                    int LineAnimationX = (Width / 2) - (LineAnimationWidth / 2);
-                    g.FillRectangle(UseAccent ? SkinManager.ColorScheme.AccentBrush : SkinManager.ColorScheme.PrimaryBrush, LineAnimationX, LINE_Y, LineAnimationWidth, 2);
+                    if (!isM3)
+                    {
+                        int LineAnimationWidth = (int)(Width * animationProgress);
+                        int LineAnimationX = (Width / 2) - (LineAnimationWidth / 2);
+                        g.FillRectangle(UseAccent ? SkinManager.ColorScheme.AccentBrush : SkinManager.ColorScheme.PrimaryBrush, LineAnimationX, LINE_Y, LineAnimationWidth, 2);
+                    }
                 }
             }
 
@@ -1585,11 +1623,10 @@
                     NativeText.DrawTransparentText(
                     Hint,
                     SkinManager.getTextBoxFontBySize(hintTextSize),
-                    Enabled ? !_errorState || (!userTextPresent && !isFocused) ? isFocused ? UseAccent ?
-                    SkinManager.ColorScheme.AccentColor : // Focus Accent
-                    SkinManager.ColorScheme.PrimaryColor : // Focus Primary
-                    SkinManager.TextMediumEmphasisColor : // not focused
-                    SkinManager.BackgroundHoverRedColor : // error state
+                    Enabled ? !_errorState || (!userTextPresent && !isFocused) ? isFocused ?
+                    fieldAccentColor : // Focus Primary
+                    helperColor : // not focused
+                    errorColor : // error state
                     SkinManager.TextDisabledOrHintColor, // Disabled
                     hintRect.Location,
                     hintRect.Size,
@@ -1605,11 +1642,10 @@
                     NativeText.DrawTransparentText(
                     HelperText,
                     SkinManager.getTextBoxFontBySize(hintTextSize),
-                    Enabled ? !_errorState || (!userTextPresent && !isFocused) ? isFocused ? UseAccent ?
-                    SkinManager.ColorScheme.AccentColor : // Focus Accent
-                    SkinManager.ColorScheme.PrimaryColor : // Focus Primary
-                    SkinManager.TextMediumEmphasisColor : // not focused
-                    SkinManager.BackgroundHoverRedColor : // error state
+                    Enabled ? !_errorState || (!userTextPresent && !isFocused) ? isFocused ?
+                    fieldAccentColor : // Focus Primary
+                    helperColor : // not focused
+                    errorColor : // error state
                     SkinManager.TextDisabledOrHintColor, // Disabled
                     helperTextRect.Location,
                     helperTextRect.Size,
@@ -1626,7 +1662,7 @@
                     ErrorMessage,
                     SkinManager.getTextBoxFontBySize(hintTextSize),
                     Enabled ? 
-                    SkinManager.BackgroundHoverRedColor : // error state
+                    errorColor : // error state
                     SkinManager.TextDisabledOrHintColor, // Disabled
                     helperTextRect.Location,
                     helperTextRect.Size,

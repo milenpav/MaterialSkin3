@@ -122,7 +122,7 @@
             Size strSize;
             using (NativeTextRenderer NativeText = new NativeTextRenderer(CreateGraphics()))
             {
-                strSize = NativeText.MeasureLogString(Text, SkinManager.getLogFontByType(MaterialSkinManager.fontType.Body1));
+                strSize = NativeText.MeasureLogString(Text, SkinManager.getLogFontByType(SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body1));
             }
             var w = TRACK_SIZE_WIDTH + THUMB_SIZE + strSize.Width;
             return Ripple ? new Size(w, RIPPLE_DIAMETER) : new Size(w, THUMB_SIZE);
@@ -137,28 +137,43 @@
             var g = pevent.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
 
             g.Clear(Parent.BackColor);
 
             var animationProgress = _checkAM.GetProgress();
 
             // Draw Track
+            Color offThumbColor = isM3 ? SkinManager.ActiveColorRoles.Outline : SkinManager.SwitchOffThumbColor;
+            Color onThumbColor = isM3 ? SkinManager.ActiveColorRoles.OnPrimary : SkinManager.ColorScheme.AccentColor;
+            Color offTrackColor = isM3 ? SkinManager.ActiveColorRoles.SurfaceContainerHigh : SkinManager.SwitchOffTrackColor;
+            Color onTrackColor = isM3 ? SkinManager.ActiveColorRoles.Primary : SkinManager.ColorScheme.AccentColor;
+            Color disabledThumbColor = isM3 ? SkinManager.ActiveColorRoles.OnSurface.WithAlpha(97) : SkinManager.SwitchOffDisabledThumbColor;
+            Color disabledTrackColor = isM3 ? SkinManager.ActiveColorRoles.OnSurface.WithAlpha(30) : SkinManager.BackgroundDisabledColor;
             Color thumbColor = DrawHelper.BlendColor(
-                        (Enabled ? SkinManager.SwitchOffThumbColor : SkinManager.SwitchOffDisabledThumbColor), // Off color
-                        (Enabled ? SkinManager.ColorScheme.AccentColor : DrawHelper.BlendColor(SkinManager.ColorScheme.AccentColor, SkinManager.SwitchOffDisabledThumbColor, 197)), // On color
+                        Enabled ? offThumbColor : disabledThumbColor,
+                        Enabled ? onThumbColor : DrawHelper.BlendColor(onTrackColor, disabledThumbColor, 197),
                         animationProgress * 255); // Blend amount
 
             using (var path = DrawHelper.CreateRoundRect(new Rectangle(TRACK_CENTER_X_BEGIN - TRACK_RADIUS, TRACK_CENTER_Y - TRACK_SIZE_HEIGHT / 2, TRACK_SIZE_WIDTH, TRACK_SIZE_HEIGHT), TRACK_RADIUS))
             {
                 using (SolidBrush trackBrush = new SolidBrush(
-                    Color.FromArgb(Enabled ? SkinManager.SwitchOffTrackColor.A : SkinManager.BackgroundDisabledColor.A, // Track alpha
+                    Color.FromArgb(Enabled ? (isM3 ? 255 : SkinManager.SwitchOffTrackColor.A) : disabledTrackColor.A, // Track alpha
                     DrawHelper.BlendColor( // animate color
-                        (Enabled ? SkinManager.SwitchOffTrackColor : SkinManager.BackgroundDisabledColor), // Off color
-                        SkinManager.ColorScheme.AccentColor, // On color
+                        Enabled ? offTrackColor : disabledTrackColor, // Off color
+                        onTrackColor, // On color
                         animationProgress * 255) // Blend amount
                         .RemoveAlpha())))
                 {
                     g.FillPath(trackBrush, path);
+                }
+
+                if (isM3)
+                {
+                    using (Pen outlinePen = new Pen(Checked ? onTrackColor : SkinManager.ActiveColorRoles.Outline, 2))
+                    {
+                        g.DrawPath(outlinePen, path);
+                    }
                 }
             }
 
@@ -168,9 +183,9 @@
             // Ripple
             int rippleSize = (Height % 2 == 0) ? Height - 2 : Height - 3;
 
-            Color rippleColor = Color.FromArgb(40, // color alpha
-                Checked ? SkinManager.ColorScheme.AccentColor : // On color
-                (SkinManager.Theme == MaterialSkinManager.Themes.LIGHT ? Color.Black : Color.White)); // Off color
+            Color rippleColor = Color.FromArgb(isM3 ? 18 : 40, // color alpha
+                Checked ? onTrackColor : // On color
+                (isM3 ? SkinManager.ActiveColorRoles.OnSurface : (SkinManager.Theme == MaterialSkinManager.Themes.LIGHT ? Color.Black : Color.White))); // Off color
 
             if (Ripple && _rippleAM.IsAnimating())
             {
@@ -200,13 +215,16 @@
 
             // draw Thumb Shadow
             RectangleF thumbBounds = new RectangleF(TRACK_CENTER_X_BEGIN + OffsetX - THUMB_SIZE_HALF, TRACK_CENTER_Y - THUMB_SIZE_HALF, THUMB_SIZE, THUMB_SIZE);
-            using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(12, 0, 0, 0)))
+            if (!isM3 || Checked)
             {
-                g.FillEllipse(shadowBrush, new RectangleF(thumbBounds.X - 2, thumbBounds.Y - 1, thumbBounds.Width + 4, thumbBounds.Height + 6));
-                g.FillEllipse(shadowBrush, new RectangleF(thumbBounds.X - 1, thumbBounds.Y - 1, thumbBounds.Width + 2, thumbBounds.Height + 4));
-                g.FillEllipse(shadowBrush, new RectangleF(thumbBounds.X - 0, thumbBounds.Y - 0, thumbBounds.Width + 0, thumbBounds.Height + 2));
-                g.FillEllipse(shadowBrush, new RectangleF(thumbBounds.X - 0, thumbBounds.Y + 2, thumbBounds.Width + 0, thumbBounds.Height + 0));
-                g.FillEllipse(shadowBrush, new RectangleF(thumbBounds.X - 0, thumbBounds.Y + 1, thumbBounds.Width + 0, thumbBounds.Height + 0));
+                using (SolidBrush shadowBrush = new SolidBrush(Color.FromArgb(12, 0, 0, 0)))
+                {
+                    g.FillEllipse(shadowBrush, new RectangleF(thumbBounds.X - 2, thumbBounds.Y - 1, thumbBounds.Width + 4, thumbBounds.Height + 6));
+                    g.FillEllipse(shadowBrush, new RectangleF(thumbBounds.X - 1, thumbBounds.Y - 1, thumbBounds.Width + 2, thumbBounds.Height + 4));
+                    g.FillEllipse(shadowBrush, new RectangleF(thumbBounds.X - 0, thumbBounds.Y - 0, thumbBounds.Width + 0, thumbBounds.Height + 2));
+                    g.FillEllipse(shadowBrush, new RectangleF(thumbBounds.X - 0, thumbBounds.Y + 2, thumbBounds.Width + 0, thumbBounds.Height + 0));
+                    g.FillEllipse(shadowBrush, new RectangleF(thumbBounds.X - 0, thumbBounds.Y + 1, thumbBounds.Width + 0, thumbBounds.Height + 0));
+                }
             }
 
             // draw Thumb
@@ -221,7 +239,7 @@
                 Rectangle textLocation = new Rectangle(TEXT_OFFSET + TRACK_SIZE_WIDTH, 0, Width - (TEXT_OFFSET + TRACK_SIZE_WIDTH), Height);
                 NativeText.DrawTransparentText(
                     Text,
-                    SkinManager.getLogFontByType(MaterialSkinManager.fontType.Body1),
+                    SkinManager.getLogFontByType(isM3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body1),
                     Enabled ? SkinManager.TextHighEmphasisColor : SkinManager.TextDisabledOrHintColor,
                     textLocation.Location,
                     textLocation.Size,

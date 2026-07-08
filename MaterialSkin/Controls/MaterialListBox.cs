@@ -294,8 +294,12 @@ namespace MaterialSkin.Controls
             MultiSelect = false;
             UseAccentColor = false;
             ForeColor = SkinManager.TextHighEmphasisColor; // Color.Black;
-            BackColor = Color.White;
-            BorderColor = Color.LightGray;
+            BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                ? SkinManager.ActiveColorRoles.SurfaceContainerHigh
+                : SkinManager.BackgroundColor;
+            BorderColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                ? SkinManager.ActiveColorRoles.OutlineVariant
+                : Color.LightGray;
             UpdateProperties();
         }
 
@@ -402,12 +406,16 @@ namespace MaterialSkin.Controls
 
             Graphics g = e.Graphics;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
             Rectangle mainRect = new Rectangle(0, 0, Width - (ShowBorder ? 1 : 0), Height - (ShowBorder ? 1 : 0));
 
             int lastItem = (_scrollBar.Value / _itemHeight) + (Height / _itemHeight) + 1 > Items.Count ? Items.Count : (_scrollBar.Value / _itemHeight) + (Height / _itemHeight) + 1;
             int firstItem = _scrollBar.Value / _itemHeight < 0 ? 0 : (_scrollBar.Value / _itemHeight);
 
-            g.FillRectangle(Enabled ? SkinManager.BackgroundBrush : SkinManager.BackgroundDisabledBrush, mainRect);
+            using (Brush mainBrush = new SolidBrush(Enabled ? (isM3 ? SkinManager.ActiveColorRoles.Surface : SkinManager.BackgroundColor) : SkinManager.BackgroundDisabledColor))
+            {
+                g.FillRectangle(mainBrush, mainRect);
+            }
 
             //Set TextAlignFlags
             NativeTextRenderer.TextAlignFlags primaryTextAlignFlags;
@@ -425,9 +433,9 @@ namespace MaterialSkin.Controls
             //Set color and brush
             Color SelectedColor = new Color();
             if (UseAccentColor)
-                SelectedColor = SkinManager.ColorScheme.AccentColor;
+                SelectedColor = isM3 ? SkinManager.ActiveColorRoles.SecondaryContainer : SkinManager.ColorScheme.AccentColor;
             else
-                SelectedColor = SkinManager.ColorScheme.PrimaryColor;
+                SelectedColor = isM3 ? SkinManager.ActiveColorRoles.PrimaryContainer : SkinManager.ColorScheme.PrimaryColor;
             SolidBrush SelectedBrush = new SolidBrush(SelectedColor);
 
             //Draw items
@@ -442,7 +450,10 @@ namespace MaterialSkin.Controls
                 {
                     if (i == _hoveredItem && !_indicates.Contains(i))
                     {
-                        g.FillRectangle(SkinManager.BackgroundHoverBrush, itemRect);
+                        using (Brush hoverBrush = new SolidBrush(isM3 ? SkinManager.ActiveColorRoles.SurfaceContainerHigh : SkinManager.BackgroundHoverColor))
+                        {
+                            g.FillRectangle(hoverBrush, itemRect);
+                        }
                     }
                     else if (_indicates.Contains(i))
                     {
@@ -456,7 +467,10 @@ namespace MaterialSkin.Controls
                 {
                     if (i == _hoveredItem && i != SelectedIndex)
                     {
-                        g.FillRectangle(SkinManager.BackgroundHoverBrush, itemRect);
+                        using (Brush hoverBrush = new SolidBrush(isM3 ? SkinManager.ActiveColorRoles.SurfaceContainerHigh : SkinManager.BackgroundHoverColor))
+                        {
+                            g.FillRectangle(hoverBrush, itemRect);
+                        }
                     }
                     else if (i == SelectedIndex)
                     {
@@ -493,9 +507,9 @@ namespace MaterialSkin.Controls
                     NativeText.DrawTransparentText(
                     itemText,
                     _primaryFont,
-                    Enabled ? (i != SelectedIndex || UseAccentColor) ? 
+                    Enabled ? (i != SelectedIndex) ? 
                     SkinManager.TextHighEmphasisColor : 
-                    SkinManager.ColorScheme.TextColor :
+                    (isM3 ? (UseAccentColor ? SkinManager.ActiveColorRoles.OnSecondaryContainer : SkinManager.ActiveColorRoles.OnPrimaryContainer) : SkinManager.ColorScheme.TextColor) :
                     SkinManager.TextDisabledOrHintColor, // Disabled
                     primaryTextRect.Location,
                     primaryTextRect.Size,
@@ -505,9 +519,9 @@ namespace MaterialSkin.Controls
                         NativeText.DrawTransparentText(
                         itemSecondaryText,
                         _secondaryFont,
-                        Enabled ? (i != SelectedIndex || UseAccentColor) ? 
-                        SkinManager.TextDisabledOrHintColor : 
-                        SkinManager.ColorScheme.TextColor.Darken(0.25f) :
+                        Enabled ? (i != SelectedIndex) ? 
+                        (isM3 ? SkinManager.ActiveColorRoles.OnSurfaceVariant : SkinManager.TextDisabledOrHintColor) : 
+                        (isM3 ? (UseAccentColor ? SkinManager.ActiveColorRoles.OnSecondaryContainer : SkinManager.ActiveColorRoles.OnPrimaryContainer).WithAlpha(180) : SkinManager.ColorScheme.TextColor.Darken(0.25f)) :
                         SkinManager.TextDisabledOrHintColor, // Disabled
                         secondaryTextRect.Location,
                         secondaryTextRect.Size,
@@ -518,9 +532,9 @@ namespace MaterialSkin.Controls
                         NativeText.DrawMultilineTransparentText(
                         itemSecondaryText,
                         _secondaryFont,
-                        Enabled ? (i != SelectedIndex || UseAccentColor) ? 
-                        SkinManager.TextDisabledOrHintColor : 
-                        SkinManager.ColorScheme.TextColor.Darken(0.25f) :
+                        Enabled ? (i != SelectedIndex) ? 
+                        (isM3 ? SkinManager.ActiveColorRoles.OnSurfaceVariant : SkinManager.TextDisabledOrHintColor) : 
+                        (isM3 ? (UseAccentColor ? SkinManager.ActiveColorRoles.OnSecondaryContainer : SkinManager.ActiveColorRoles.OnPrimaryContainer).WithAlpha(180) : SkinManager.ColorScheme.TextColor.Darken(0.25f)) :
                         SkinManager.TextDisabledOrHintColor, // Disabled
                         secondaryTextRect.Location,
                         secondaryTextRect.Size,
@@ -531,8 +545,12 @@ namespace MaterialSkin.Controls
             }
             if (ShowBorder)
             {
-                g.DrawRectangle(Pens.LightGray, mainRect);
+                using (Pen borderPen = new Pen(isM3 ? SkinManager.ActiveColorRoles.OutlineVariant : Color.LightGray))
+                {
+                    g.DrawRectangle(borderPen, mainRect);
+                }
             }
+            SelectedBrush.Dispose();
         }
 
         #endregion Draw Control

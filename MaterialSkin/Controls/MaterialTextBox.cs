@@ -537,17 +537,46 @@
             base.OnPaint(pevent);
 
             var g = pevent.Graphics;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
 
             g.Clear(Parent.BackColor);
+            Color fillColor = !Enabled
+                ? SkinManager.BackgroundDisabledColor
+                : Focused
+                    ? SkinManager.BackgroundFocusColor
+                    : MouseState == MouseState.HOVER && (!ReadOnly || (ReadOnly && !AnimateReadOnly))
+                        ? SkinManager.BackgroundHoverColor
+                        : DrawHelper.BlendColor(Parent.BackColor, SkinManager.BackgroundAlternativeColor, SkinManager.BackgroundAlternativeColor.A);
 
-            SolidBrush backBrush = new SolidBrush(DrawHelper.BlendColor(Parent.BackColor, SkinManager.BackgroundAlternativeColor, SkinManager.BackgroundAlternativeColor.A));
-
-            g.FillRectangle(
-                !Enabled ? SkinManager.BackgroundDisabledBrush : // Disabled
-                Focused ? SkinManager.BackgroundFocusBrush :  // Focused
-                MouseState == MouseState.HOVER && (!ReadOnly || (ReadOnly && !AnimateReadOnly)) ? SkinManager.BackgroundHoverBrush : // Hover
-                backBrush, // Normal
-                ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, LINE_Y);
+            if (isM3)
+            {
+                using (var fieldPath = DrawHelper.CreateRoundRect(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, LINE_Y, 12))
+                using (var fillBrush = new SolidBrush(fillColor))
+                {
+                    g.FillPath(fillBrush, fieldPath);
+                    float outlineWidth = Focused || _errorState ? 2f : 1f;
+                    float outlineInset = outlineWidth <= 1f ? 0.5f : 1f;
+                    RectangleF outlineBounds = new RectangleF(
+                        outlineInset,
+                        outlineInset,
+                        Width - (outlineInset * 2) - 1,
+                        LINE_Y - (outlineInset * 2) - 1);
+                    using (var outlinePath = DrawHelper.CreateRoundRect(outlineBounds, 12))
+                    using (var outlinePen = new Pen(_errorState ? SkinManager.ActiveColorRoles.Error : Focused ? (UseAccent ? SkinManager.ActiveColorRoles.Secondary : SkinManager.ActiveColorRoles.Primary) : SkinManager.ActiveColorRoles.OutlineVariant, outlineWidth))
+                    {
+                        g.DrawPath(outlinePen, outlinePath);
+                    }
+                }
+            }
+            else
+            {
+                using (SolidBrush backBrush = new SolidBrush(fillColor))
+                {
+                    g.FillRectangle(backBrush, ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, LINE_Y);
+                }
+            }
 
             //Leading Icon
             if (LeadingIcon != null)
@@ -566,15 +595,17 @@
 
             // HintText
             bool userTextPresent = !String.IsNullOrEmpty(Text);
-            Color textColor = Enabled ? Focused ?
-                            UseAccent ? SkinManager.ColorScheme.AccentColor : SkinManager.ColorScheme.PrimaryColor : // Focused
-                            SkinManager.TextHighEmphasisColor : // Inactive
-                            SkinManager.TextDisabledOrHintColor; // Disabled
+            Color fieldAccentColor = UseAccent ? (isM3 ? SkinManager.ActiveColorRoles.Secondary : SkinManager.ColorScheme.AccentColor) : (isM3 ? SkinManager.ActiveColorRoles.Primary : SkinManager.ColorScheme.PrimaryColor);
+            Color helperColor = isM3 ? SkinManager.ActiveColorRoles.OnSurfaceVariant : SkinManager.TextMediumEmphasisColor;
+            Color errorColor = isM3 ? SkinManager.ActiveColorRoles.Error : SkinManager.BackgroundHoverRedColor;
             Rectangle hintRect = new Rectangle(_left_padding, ClientRectangle.Y, Width - _left_padding - _right_padding, LINE_Y);
             int hintTextSize = 16;
 
             // bottom line base
-            g.FillRectangle(SkinManager.DividersAlternativeBrush, 0, LINE_Y, Width, 1);
+            if (!isM3)
+            {
+                g.FillRectangle(SkinManager.DividersAlternativeBrush, 0, LINE_Y, Width, 1);
+            }
 
             if (ReadOnly == false || (ReadOnly && AnimateReadOnly))
             {
@@ -589,7 +620,7 @@
                     }
 
                     // bottom line
-                    if (Focused)
+                    if (!isM3 && Focused)
                     {
                         g.FillRectangle(_errorState ? SkinManager.BackgroundHoverRedBrush : UseAccent ? SkinManager.ColorScheme.AccentBrush : SkinManager.ColorScheme.PrimaryBrush, 0, LINE_Y, Width, 2);
                     }
@@ -611,9 +642,12 @@
                     }
 
                     // Line Animation
-                    int LineAnimationWidth = (int)(Width * animationProgress);
-                    int LineAnimationX = (Width / 2) - (LineAnimationWidth / 2);
-                    g.FillRectangle(UseAccent ? SkinManager.ColorScheme.AccentBrush : SkinManager.ColorScheme.PrimaryBrush, LineAnimationX, LINE_Y, LineAnimationWidth, 2);
+                    if (!isM3)
+                    {
+                        int LineAnimationWidth = (int)(Width * animationProgress);
+                        int LineAnimationX = (Width / 2) - (LineAnimationWidth / 2);
+                        g.FillRectangle(UseAccent ? SkinManager.ColorScheme.AccentBrush : SkinManager.ColorScheme.PrimaryBrush, LineAnimationX, LINE_Y, LineAnimationWidth, 2);
+                    }
                 }
             }
 
@@ -638,8 +672,9 @@
                 string textBeforeSelection = textToDisplay.Substring(0, SelectionStart);
                 textSelected = textToDisplay.Substring(SelectionStart, SelectionLength);
 
-                int selectX = NativeText.MeasureLogString(textBeforeSelection, SkinManager.getLogFontByType(MaterialSkinManager.fontType.Subtitle1)).Width;
-                int selectWidth = NativeText.MeasureLogString(textSelected, SkinManager.getLogFontByType(MaterialSkinManager.fontType.Subtitle1)).Width;
+                IntPtr textFont = SkinManager.getLogFontByType(isM3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Subtitle1);
+                int selectX = NativeText.MeasureLogString(textBeforeSelection, textFont).Width;
+                int selectWidth = NativeText.MeasureLogString(textSelected, textFont).Width;
 
                 textSelectRect = new Rectangle(
                     textRect.X + selectX, UseTallSize ? hasHint ?
@@ -655,7 +690,7 @@
                 // Draw user text
                 NativeText.DrawTransparentText(
                     textToDisplay,
-                    SkinManager.getLogFontByType(MaterialSkinManager.fontType.Subtitle1),
+                    textFont,
                     Enabled ? SkinManager.TextHighEmphasisColor : SkinManager.TextDisabledOrHintColor,
                     textRect.Location,
                     textRect.Size,
@@ -672,8 +707,8 @@
                 {
                     NativeText.DrawTransparentText(
                         textSelected,
-                        SkinManager.getLogFontByType(MaterialSkinManager.fontType.Subtitle1),
-                        SkinManager.ColorScheme.TextColor,
+                        SkinManager.getLogFontByType(isM3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Subtitle1),
+                        isM3 ? SkinManager.ActiveColorRoles.OnSecondaryContainer : SkinManager.ColorScheme.TextColor,
                         textSelectRect.Location,
                         textSelectRect.Size,
                         NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);
@@ -690,11 +725,10 @@
                     NativeText.DrawTransparentText(
                     Hint,
                     SkinManager.getTextBoxFontBySize(hintTextSize),
-                    Enabled ? !_errorState || (!userTextPresent && !Focused) ? Focused ? UseAccent ?
-                    SkinManager.ColorScheme.AccentColor : // Focus Accent
-                    SkinManager.ColorScheme.PrimaryColor : // Focus Primary
-                    SkinManager.TextMediumEmphasisColor : // not focused
-                    SkinManager.BackgroundHoverRedColor : // error state
+                    Enabled ? !_errorState || (!userTextPresent && !Focused) ? Focused ?
+                    fieldAccentColor : // Focus Primary
+                    helperColor : // not focused
+                    errorColor : // error state
                     SkinManager.TextDisabledOrHintColor, // Disabled
                     hintRect.Location,
                     hintRect.Size,

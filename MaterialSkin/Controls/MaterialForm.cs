@@ -992,6 +992,11 @@ namespace MaterialSkin.Controls
             var downBrush = SkinManager.BackgroundFocusBrush;
             var g = e.Graphics;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            var isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
+            var actionBarColor = isM3 ? SkinManager.ActiveColorRoles.SurfaceContainerHigh : SkinManager.ColorScheme.PrimaryColor;
+            var statusBarColor = isM3 ? SkinManager.ActiveColorRoles.SurfaceContainer : SkinManager.ColorScheme.DarkPrimaryColor;
+            var titleColor = isM3 ? SkinManager.ActiveColorRoles.OnSurface : SkinManager.ColorScheme.TextColor;
+            var chromeIconColor = isM3 ? SkinManager.ActiveColorRoles.OnSurfaceVariant : SkinManager.ColorScheme.TextColor;
 
             g.Clear(SkinManager.BackdropColor);
 
@@ -1007,8 +1012,12 @@ namespace MaterialSkin.Controls
             {
                 if (ControlBox)
                 {
-                    g.FillRectangle(SkinManager.ColorScheme.DarkPrimaryBrush, _statusBarBounds);
-                    g.FillRectangle(SkinManager.ColorScheme.PrimaryBrush, _actionBarBounds);
+                    using (var statusBrush = new SolidBrush(statusBarColor))
+                    using (var actionBrush = new SolidBrush(actionBarColor))
+                    {
+                        g.FillRectangle(statusBrush, _statusBarBounds);
+                        g.FillRectangle(actionBrush, _actionBarBounds);
+                    }
                 }
 
                 // Determine whether or not we even should be drawing the buttons.
@@ -1034,7 +1043,7 @@ namespace MaterialSkin.Controls
                 if (_buttonState == ButtonState.XDown && ControlBox)
                     g.FillRectangle(SkinManager.BackgroundDownRedBrush, _xButtonBounds);
 
-                using (var formButtonsPen = new Pen(SkinManager.ColorScheme.TextColor, 2))
+                using (var formButtonsPen = new Pen(chromeIconColor, 2))
                 {
                     // Minimize button.
                     if (showMin)
@@ -1147,7 +1156,7 @@ namespace MaterialSkin.Controls
                     rippleBrush.Dispose();
                 }
 
-                using (var formButtonsPen = new Pen(SkinManager.ColorScheme.TextColor, 2))
+                using (var formButtonsPen = new Pen(chromeIconColor, 2))
                 {
                     // Middle line
                     g.DrawLine(
@@ -1181,8 +1190,8 @@ namespace MaterialSkin.Controls
                 using (NativeTextRenderer NativeText = new NativeTextRenderer(g))
                 {
                     Rectangle textLocation = new Rectangle(DrawerTabControl != null ? TITLE_LEFT_PADDING : TITLE_LEFT_PADDING - (ICON_SIZE + (ACTION_BAR_PADDING*2)), STATUS_BAR_HEIGHT, ClientSize.Width, ACTION_BAR_HEIGHT);
-                    NativeText.DrawTransparentText(Text, SkinManager.getLogFontByType(MaterialSkinManager.fontType.H6),
-                        SkinManager.ColorScheme.TextColor,
+                    NativeText.DrawTransparentText(Text, SkinManager.getLogFontByType(isM3 ? MaterialSkinManager.fontType.TitleLarge : MaterialSkinManager.fontType.H6),
+                        titleColor,
                         textLocation.Location,
                         textLocation.Size,
                         NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);

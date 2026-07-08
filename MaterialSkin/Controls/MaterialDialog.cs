@@ -24,10 +24,17 @@
         private AnimationManager _AnimationManager;
         private bool CloseAnimation = false;
         private Form _formOverlay;
+        private Panel _contentHost;
+        private Panel _userControlScrollPanel;
         private String _text;
         private String _title;
         private readonly string title;
         private UserControl _userControl;
+        private bool _userControlShellSized;
+        private int CornerRadius => SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? 28 : 6;
+        private MaterialSkinManager.fontType DialogTitleFont => SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? MaterialSkinManager.fontType.HeadlineSmall : MaterialSkinManager.fontType.H6;
+        private MaterialSkinManager.fontType DialogBodyFont => SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Body1;
+        private int CompactHeaderHeight => 24;
 
         /// <summary>
         /// The Collection for the Buttons
@@ -115,7 +122,7 @@
                 Controls.Add(_cancelButton);
 
             Width = 560;
-            int TextWidth = TextRenderer.MeasureText(_text, SkinManager.getFontByType(MaterialSkinManager.fontType.Body1)).Width;
+            int TextWidth = TextRenderer.MeasureText(_text, SkinManager.getFontByType(DialogBodyFont)).Width;
             int RectWidth = Width - (2 * LEFT_RIGHT_PADDING) - BUTTON_PADDING;
             int RectHeight = ((TextWidth / RectWidth) + 1) * 19;
             Rectangle textRect = new Rectangle(
@@ -125,7 +132,7 @@
                 RectHeight + 9);
 
             Height = _header_Height + TEXT_TOP_PADDING + textRect.Height + TEXT_BOTTOM_PADDING + 52; //560;
-            Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 6, 6));
+            Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, CornerRadius, CornerRadius));
 
             int _buttonWidth = ((TextRenderer.MeasureText(ValidationButtonText, SkinManager.getFontByType(MaterialSkinManager.fontType.Button))).Width + 32);
             Rectangle _validationbuttonBounds = new Rectangle((Width) - BUTTON_PADDING - _buttonWidth, Height - BUTTON_PADDING - BUTTON_HEIGHT, _buttonWidth, BUTTON_HEIGHT);
@@ -143,6 +150,8 @@
             _cancelButton.Left = _cancelbuttonBounds.Left;  //Button minimum width management
 
             Owner = ParentForm;
+
+            SkinManager.AddFormToManage(this);
 
             //this.ShowDialog();
             //this Dispose();
@@ -163,7 +172,7 @@
                 ControlBox = false,
                 FormBorderStyle = FormBorderStyle.None,
                 Size = new Size(ParentForm.Width, ParentForm.Height),
-                ShowInTaskbar = true,
+                ShowInTaskbar = false,
                 Owner = ParentForm,
                 Visible = true,
                 Location = new Point(ParentForm.Location.X, ParentForm.Location.Y),
@@ -178,47 +187,57 @@
                 _header_Height = 40;
 
             Text=title;
-            ShowInTaskbar = true;
-            Sizable = true;
+            ShowInTaskbar = false;
+            Sizable = false;
             ControlBox=true;
             MaximizeBox=false;
             MinimizeBox=false;
+            StartPosition = FormStartPosition.CenterParent;
 
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
             
             BackColor = SkinManager.BackgroundColor;
-            FormStyle = FormStyles.ActionBar_40;
+            FormStyle = FormStyles.ActionBar_None;
             _AnimationManager = new AnimationManager();
             _AnimationManager.AnimationType = AnimationType.EaseOut;
             _AnimationManager.Increment = 0.03;
             _AnimationManager.OnAnimationProgress += _AnimationManager_OnAnimationProgress;
-            // Създаване на панел със скролиране
-            Panel scrollPanel = new Panel
+
+            _userControl.Margin = Padding.Empty;
+            _userControl.Location = Point.Empty;
+            _userControl.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            _userControl.PerformLayout();
+
+            _contentHost = new Panel
             {
-                AutoScroll = true, // Включване на скролиране
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 BackColor = SkinManager.BackgroundColor,
-                Dock = DockStyle.Fill
+                Margin = Padding.Empty,
+                Padding = new Padding(24, 16, 24, 24),
+                Dock = DockStyle.Top
             };
+            _contentHost.Controls.Add(_userControl);
 
-            // Добавяне на контролата
-            scrollPanel.Controls.Add(_userControl);
+            _userControlScrollPanel = new Panel
+            {
+                AutoScroll = true,
+                BackColor = SkinManager.BackgroundColor,
+                Dock = DockStyle.Fill,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty
+            };
+            _userControlScrollPanel.Controls.Add(_contentHost);
 
-            // Изчисли максималния размер, базиран на работната площ на екрана
-            Size screenSize = Screen.PrimaryScreen.WorkingArea.Size;
-            Size controlSize = _userControl.Size;
+            Rectangle workArea = Screen.FromControl(ParentForm).WorkingArea;
 
-            // Задаване на минимален и максимален размер на формата
-            this.MinimumSize = new Size(Math.Min(controlSize.Width+20, screenSize.Width), Math.Min(controlSize.Height+_header_Height+30, screenSize.Height));
-            this.MaximumSize = screenSize;
+            MinimumSize = new Size(Math.Min(560, workArea.Width - 48), Math.Min(360, workArea.Height - 48));
+            MaximumSize = new Size(workArea.Width - 24, workArea.Height - 24);
+            Size = MinimumSize;
 
-            // Ако контролата може да се побере на екрана, задавай точния ѝ размер, иначе използвай размера на екрана
-            this.Size = new Size(
-                Math.Min(controlSize.Width+20, screenSize.Width),
-                Math.Min(controlSize.Height+_header_Height+30, screenSize.Height)
-            );
+            Controls.Add(_userControlScrollPanel);
 
-            // Добави панела към формата
-            Controls.Add(scrollPanel);
+            SkinManager.AddFormToManage(this);
 
         }
 
@@ -259,8 +278,23 @@
         {
             base.OnLoad(e);
 
+            if (_userControl != null)
+            {
+                UpdateUserControlShellSize();
+            }
+
             Location = new Point(Convert.ToInt32(Owner.Location.X + (Owner.Width / 2) - (Width / 2)), Convert.ToInt32(Owner.Location.Y + (Owner.Height/2) - (Height / 2)));
             _AnimationManager.StartNewAnimation(AnimationDirection.In);
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+
+            if (_userControl != null)
+            {
+                BeginInvoke(new Action(UpdateUserControlShellSize));
+            }
         }
 
         /// <summary>
@@ -282,6 +316,21 @@
             if (_userControl!=null)
             {
                 base.OnPaint(e);
+
+                using (NativeTextRenderer NativeText = new NativeTextRenderer(e.Graphics))
+                {
+                    Rectangle compactTitleRect = new Rectangle(16, 0, Math.Max(0, ClientSize.Width - 76), CompactHeaderHeight);
+                    NativeText.DrawTransparentText(
+                        _title,
+                        SkinManager.getLogFontByType(SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                            ? MaterialSkinManager.fontType.TitleMedium
+                            : MaterialSkinManager.fontType.Subtitle1),
+                        SkinManager.TextHighEmphasisColor,
+                        compactTitleRect.Location,
+                        compactTitleRect.Size,
+                        NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);
+                }
+
                 return;
             }
 
@@ -304,7 +353,7 @@
                 // Draw header text
                 NativeText.DrawTransparentText(
                     _title,
-                    SkinManager.getLogFontByType(MaterialSkinManager.fontType.H6),
+                    SkinManager.getLogFontByType(DialogTitleFont),
                     SkinManager.TextHighEmphasisColor,
                     titleRect.Location,
                     titleRect.Size,
@@ -313,7 +362,7 @@
 
             // Calc text Rect
 
-            int TextWidth = TextRenderer.MeasureText(_text, SkinManager.getFontByType(MaterialSkinManager.fontType.Body1)).Width;
+            int TextWidth = TextRenderer.MeasureText(_text, SkinManager.getFontByType(DialogBodyFont)).Width;
             int RectWidth = Width - (2 * LEFT_RIGHT_PADDING) - BUTTON_PADDING;
             int RectHeight = ((TextWidth / RectWidth) + 1) * 19;
 
@@ -329,7 +378,7 @@
                 // Draw header text
                 NativeText.DrawMultilineTransparentText(
                     _text,
-                    SkinManager.getLogFontByType(MaterialSkinManager.fontType.Body1),
+                    SkinManager.getLogFontByType(DialogBodyFont),
                     SkinManager.TextHighEmphasisColor,
                     textRect.Location,
                     textRect.Size,
@@ -344,6 +393,7 @@
         /// </summary>
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
+            SkinManager.RemoveFormToManage(this);
             _formOverlay.Visible = false;
             _formOverlay.Close();
             _formOverlay.Dispose();
@@ -351,6 +401,95 @@
             DialogResult res = this.DialogResult;
 
             base.OnClosing(e);
+        }
+
+        private void UpdateUserControlShellSize()
+        {
+            if (_userControl == null || Owner == null)
+            {
+                return;
+            }
+
+            _userControl.PerformLayout();
+            _contentHost?.PerformLayout();
+            _userControlScrollPanel?.PerformLayout();
+
+            Rectangle workArea = Screen.FromControl(Owner).WorkingArea;
+            Size contentSize = MeasureControlContent(_userControl);
+
+            int horizontalChrome = 48;
+            int verticalChrome = CompactHeaderHeight + 40;
+            int width = Math.Min(Math.Max(contentSize.Width + horizontalChrome, MinimumSize.Width), MaximumSize.Width);
+            int height = Math.Min(Math.Max(contentSize.Height + verticalChrome, MinimumSize.Height), MaximumSize.Height);
+
+            _userControlScrollPanel.AutoScrollMinSize = new Size(
+                Math.Max(0, contentSize.Width + 48),
+                Math.Max(0, contentSize.Height + 40));
+
+            Size = new Size(width, height);
+            Location = new Point(
+                workArea.Left + Math.Max(0, (workArea.Width - Width) / 2),
+                workArea.Top + Math.Max(0, (workArea.Height - Height) / 2));
+
+            if (!_userControlShellSized)
+            {
+                _userControlShellSized = true;
+                BeginInvoke(new Action(() =>
+                {
+                    if (!IsDisposed)
+                    {
+                        UpdateUserControlShellSize();
+                    }
+                }));
+            }
+        }
+
+        private static Size MeasureControlContent(Control control)
+        {
+            Rectangle bounds = Rectangle.Empty;
+            MeasureVisibleChildBounds(control, control, ref bounds);
+
+            if (bounds.IsEmpty)
+            {
+                Size fallback = control.PreferredSize;
+                if (fallback.Width <= 0 || fallback.Height <= 0)
+                {
+                    fallback = control.Size;
+                }
+
+                return new Size(
+                    Math.Max(0, fallback.Width + control.Padding.Horizontal),
+                    Math.Max(0, fallback.Height + control.Padding.Vertical));
+            }
+
+            return new Size(
+                Math.Max(0, bounds.Right + control.Padding.Right),
+                Math.Max(0, bounds.Bottom + control.Padding.Bottom));
+        }
+
+        private static void MeasureVisibleChildBounds(Control root, Control parent, ref Rectangle bounds)
+        {
+            foreach (Control child in parent.Controls)
+            {
+                if (!child.Visible)
+                {
+                    continue;
+                }
+
+                Rectangle childBounds = root.RectangleToClient(child.RectangleToScreen(child.ClientRectangle));
+                childBounds = Rectangle.FromLTRB(
+                    childBounds.Left - child.Margin.Left,
+                    childBounds.Top - child.Margin.Top,
+                    childBounds.Right + child.Margin.Right,
+                    childBounds.Bottom + child.Margin.Bottom);
+
+                bounds = bounds.IsEmpty ? childBounds : Rectangle.Union(bounds, childBounds);
+
+                if (child.Controls.Count > 0)
+                {
+                    MeasureVisibleChildBounds(root, child, ref bounds);
+                }
+            }
         }
 
         /// <summary>

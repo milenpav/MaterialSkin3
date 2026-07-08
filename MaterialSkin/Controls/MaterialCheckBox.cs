@@ -110,7 +110,7 @@
 
             using (NativeTextRenderer NativeText = new NativeTextRenderer(CreateGraphics()))
             {
-                strSize = NativeText.MeasureLogString(Text, SkinManager.getLogFontByType(MaterialSkinManager.fontType.Body1));
+                strSize = NativeText.MeasureLogString(Text, SkinManager.getLogFontByType(SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body1));
             }
 
             int w = _boxOffset + TEXT_OFFSET + strSize.Width;
@@ -122,6 +122,7 @@
             Graphics g = pevent.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
 
             // clear the control
             g.Clear(Parent.BackColor);
@@ -130,11 +131,15 @@
             Point animationSource = new Point(CHECKBOX_CENTER, CHECKBOX_CENTER);
             double animationProgress = _checkAM.GetProgress();
 
-            int colorAlpha = Enabled ? (int)(animationProgress * 255.0) : SkinManager.CheckBoxOffDisabledColor.A;
-            int backgroundAlpha = Enabled ? (int)(SkinManager.CheckboxOffColor.A * (1.0 - animationProgress)) : SkinManager.CheckBoxOffDisabledColor.A;
+            Color selectedColor = isM3 ? SkinManager.ActiveColorRoles.Primary : SkinManager.ColorScheme.AccentColor;
+            Color unselectedColor = isM3 ? SkinManager.ActiveColorRoles.Outline : SkinManager.CheckboxOffColor;
+            Color disabledColor = isM3 ? SkinManager.ActiveColorRoles.OnSurface.WithAlpha(97) : SkinManager.CheckBoxOffDisabledColor;
+            Color stateLayerColor = Checked ? selectedColor : (isM3 ? SkinManager.ActiveColorRoles.OnSurface : (SkinManager.Theme == MaterialSkinManager.Themes.LIGHT ? Color.Black : Color.White));
+            int colorAlpha = Enabled ? (int)(animationProgress * 255.0) : disabledColor.A;
+            int backgroundAlpha = Enabled ? (int)(unselectedColor.A * (1.0 - animationProgress)) : disabledColor.A;
             int rippleHeight = (HEIGHT_RIPPLE % 2 == 0) ? HEIGHT_RIPPLE - 3 : HEIGHT_RIPPLE - 2;
 
-            SolidBrush brush = new SolidBrush(Color.FromArgb(colorAlpha, Enabled ? SkinManager.ColorScheme.AccentColor : SkinManager.CheckBoxOffDisabledColor));
+            SolidBrush brush = new SolidBrush(Color.FromArgb(colorAlpha, Enabled ? selectedColor : disabledColor));
             Pen pen = new Pen(brush.Color, 2);
 
             // draw hover animation
@@ -143,8 +148,8 @@
                 double animationValue = _hoverAM.IsAnimating() ? _hoverAM.GetProgress() : hovered ? 1 : 0;
                 int rippleSize = (int)(rippleHeight * (0.7 + (0.3 * animationValue)));
 
-                using (SolidBrush rippleBrush = new SolidBrush(Color.FromArgb((int)(40 * animationValue),
-                    !Checked ? (SkinManager.Theme == MaterialSkinManager.Themes.LIGHT ? Color.Black : Color.White) : brush.Color))) // no animation
+                using (SolidBrush rippleBrush = new SolidBrush(Color.FromArgb((int)((isM3 ? 18 : 40) * animationValue),
+                    Checked ? brush.Color.RemoveAlpha() : stateLayerColor.RemoveAlpha()))) // no animation
                 {
                     g.FillEllipse(rippleBrush, new Rectangle(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize));
                 }
@@ -158,7 +163,7 @@
                     double animationValue = _rippleAM.GetProgress(i);
                     int rippleSize = (_rippleAM.GetDirection(i) == AnimationDirection.InOutIn) ? (int)(rippleHeight * (0.7 + (0.3 * animationValue))) : rippleHeight;
 
-                    using (SolidBrush rippleBrush = new SolidBrush(Color.FromArgb((int)((animationValue * 40)), !Checked ? (SkinManager.Theme == MaterialSkinManager.Themes.LIGHT ? Color.Black : Color.White) : brush.Color)))
+                    using (SolidBrush rippleBrush = new SolidBrush(Color.FromArgb((int)(animationValue * (isM3 ? 18 : 40)), Checked ? brush.Color.RemoveAlpha() : stateLayerColor.RemoveAlpha())))
                     {
                         g.FillEllipse(rippleBrush, new Rectangle(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize));
                     }
@@ -166,11 +171,11 @@
             }
 
             Rectangle checkMarkLineFill = new Rectangle(_boxOffset, _boxOffset, (int)(CHECKBOX_SIZE * animationProgress), CHECKBOX_SIZE);
-            using (GraphicsPath checkmarkPath = DrawHelper.CreateRoundRect(_boxOffset - 0.5f, _boxOffset - 0.5f, CHECKBOX_SIZE, CHECKBOX_SIZE, 1))
+            using (GraphicsPath checkmarkPath = DrawHelper.CreateRoundRect(_boxOffset - 0.5f, _boxOffset - 0.5f, CHECKBOX_SIZE, CHECKBOX_SIZE, isM3 ? 4 : 1))
             {
                 if (Enabled)
                 {
-                    using (Pen pen2 = new Pen(DrawHelper.BlendColor(Parent.BackColor, Enabled ? SkinManager.CheckboxOffColor : SkinManager.CheckBoxOffDisabledColor, backgroundAlpha), 2))
+                    using (Pen pen2 = new Pen(DrawHelper.BlendColor(Parent.BackColor, Enabled ? unselectedColor : disabledColor, backgroundAlpha), 2))
                     {
                         g.DrawPath(pen2, checkmarkPath);
                     }
@@ -193,7 +198,7 @@
             using (NativeTextRenderer NativeText = new NativeTextRenderer(g))
             {
                 Rectangle textLocation = new Rectangle(_boxOffset + TEXT_OFFSET, 0, Width - (_boxOffset + TEXT_OFFSET), HEIGHT_RIPPLE);
-                NativeText.DrawTransparentText(Text, SkinManager.getLogFontByType(MaterialSkinManager.fontType.Body1),
+                NativeText.DrawTransparentText(Text, SkinManager.getLogFontByType(isM3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body1),
                     Enabled ? SkinManager.TextHighEmphasisColor : SkinManager.TextDisabledOrHintColor,
                     textLocation.Location,
                     textLocation.Size,
@@ -327,7 +332,7 @@
             g.Clear(Color.Transparent);
 
             // draw the checkmark lines
-            using (Pen pen = new Pen(Parent.BackColor, 2))
+            using (Pen pen = new Pen(SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? SkinManager.ActiveColorRoles.OnPrimary : Parent.BackColor, 2))
             {
                 g.DrawLines(pen, CheckmarkLine);
             }

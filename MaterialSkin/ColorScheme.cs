@@ -10,6 +10,10 @@ namespace MaterialSkin
 
         public readonly Brush PrimaryBrush, DarkPrimaryBrush, LightPrimaryBrush, AccentBrush, TextBrush;
 
+        public readonly MaterialColorRoles Material3Light;
+
+        public readonly MaterialColorRoles Material3Dark;
+
         public ColorScheme() : this(Primary.Indigo500, Primary.Indigo700, Primary.Indigo100, Accent.Pink200, TextShade.WHITE)
         {
         }
@@ -36,6 +40,9 @@ namespace MaterialSkin
             LightPrimaryBrush = new SolidBrush(LightPrimaryColor);
             AccentBrush = new SolidBrush(AccentColor);
             TextBrush = new SolidBrush(TextColor);
+
+            Material3Light = MaterialDesign3Builder.BuildLight(PrimaryColor, DarkPrimaryColor, LightPrimaryColor, AccentColor);
+            Material3Dark = MaterialDesign3Builder.BuildDark(PrimaryColor, DarkPrimaryColor, LightPrimaryColor, AccentColor);
         }
 
         public ColorScheme(int primary, int darkPrimary, int lightPrimary, int accent, TextShade textShade)
@@ -60,6 +67,9 @@ namespace MaterialSkin
             LightPrimaryBrush = new SolidBrush(LightPrimaryColor);
             AccentBrush = new SolidBrush(AccentColor);
             TextBrush = new SolidBrush(TextColor);
+
+            Material3Light = MaterialDesign3Builder.BuildLight(PrimaryColor, DarkPrimaryColor, LightPrimaryColor, AccentColor);
+            Material3Dark = MaterialDesign3Builder.BuildDark(PrimaryColor, DarkPrimaryColor, LightPrimaryColor, AccentColor);
         }
 
         public ColorScheme(Color primary, Color darkPrimary, Color lightPrimary, Color accent, TextShade textShade)
@@ -84,6 +94,9 @@ namespace MaterialSkin
             LightPrimaryBrush = new SolidBrush(LightPrimaryColor);
             AccentBrush = new SolidBrush(AccentColor);
             TextBrush = new SolidBrush(TextColor);
+
+            Material3Light = MaterialDesign3Builder.BuildLight(PrimaryColor, DarkPrimaryColor, LightPrimaryColor, AccentColor);
+            Material3Dark = MaterialDesign3Builder.BuildDark(PrimaryColor, DarkPrimaryColor, LightPrimaryColor, AccentColor);
         }
     }
 

@@ -23,6 +23,8 @@
         private bool _closingAnimationDone = false;
         private bool _useAccentColor;
         private bool CloseAnimation = false;
+        private int CornerRadius => SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? 16 : 6;
+        private MaterialSkinManager.fontType SnackBarBodyFont => SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body2;
 
         #region "Events"
 
@@ -140,7 +142,7 @@
 
             this.ShowActionButton = ShowActionButton;
 
-            Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 6, 6));
+            Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, CornerRadius, CornerRadius));
 
             _AnimationManager = new AnimationManager();
             _AnimationManager.AnimationType = AnimationType.EaseOut;
@@ -222,8 +224,8 @@
             _actionButton.Left = Width - BUTTON_PADDING - _actionButton.Width;  //Button minimum width management
             _actionButton.Visible = _showActionButton;
 
-            Width = TextRenderer.MeasureText(_text, SkinManager.getFontByType(MaterialSkinManager.fontType.Body2)).Width + (2 * LEFT_RIGHT_PADDING) + _actionButton.Width + 48;
-            Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, 6, 6));
+            Width = TextRenderer.MeasureText(_text, SkinManager.getFontByType(SnackBarBodyFont)).Width + (2 * LEFT_RIGHT_PADDING) + _actionButton.Width + 48;
+            Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, Width, Height, CornerRadius, CornerRadius));
 
         }
 
@@ -288,7 +290,7 @@
                 // Draw header text
                 NativeText.DrawTransparentText(
                     _text,
-                    SkinManager.getLogFontByType(MaterialSkinManager.fontType.Body2),
+                    SkinManager.getLogFontByType(SnackBarBodyFont),
                     SkinManager.SnackBarTextHighEmphasisColor,
                     textRect.Location,
                     textRect.Size,

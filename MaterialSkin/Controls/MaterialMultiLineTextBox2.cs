@@ -1206,16 +1206,35 @@ namespace MaterialSkin.Controls
         {
             var g = pevent.Graphics;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
             g.Clear(Parent.BackColor);
-            SolidBrush backBrush = new SolidBrush(DrawHelper.BlendColor(Parent.BackColor, SkinManager.BackgroundAlternativeColor, SkinManager.BackgroundAlternativeColor.A));
+            Color fillColor = !Enabled
+                ? SkinManager.BackgroundDisabledColor
+                : isFocused
+                    ? SkinManager.BackgroundFocusColor
+                    : MouseState == MouseState.HOVER && (!ReadOnly || (ReadOnly && !AnimateReadOnly))
+                        ? SkinManager.BackgroundHoverColor
+                        : DrawHelper.BlendColor(Parent.BackColor, SkinManager.BackgroundAlternativeColor, SkinManager.BackgroundAlternativeColor.A);
 
-            //backColor
-            g.FillRectangle(
-                !Enabled ? SkinManager.BackgroundDisabledBrush : // Disabled
-                isFocused ? SkinManager.BackgroundFocusBrush :  // Focused
-                MouseState == MouseState.HOVER && (!ReadOnly || (ReadOnly && !AnimateReadOnly)) ? SkinManager.BackgroundHoverBrush : // Hover
-                backBrush, // Normal
-                ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, LINE_Y);
+            if (isM3)
+            {
+                using (var fieldPath = DrawHelper.CreateRoundRect(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, LINE_Y, 16))
+                using (var fillBrush = new SolidBrush(fillColor))
+                {
+                    g.FillPath(fillBrush, fieldPath);
+                    using (var outlinePen = new Pen(isFocused ? (UseAccent ? SkinManager.ActiveColorRoles.Secondary : SkinManager.ActiveColorRoles.Primary) : SkinManager.ActiveColorRoles.OutlineVariant, isFocused ? 2 : 1))
+                    {
+                        g.DrawPath(outlinePen, fieldPath);
+                    }
+                }
+            }
+            else
+            {
+                using (SolidBrush backBrush = new SolidBrush(fillColor))
+                {
+                    g.FillRectangle(backBrush, ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, LINE_Y);
+                }
+            }
 
             baseTextBox.BackColor = !Enabled ? ColorHelper.RemoveAlpha(SkinManager.BackgroundDisabledColor, BackColor) : //Disabled
                 isFocused ? DrawHelper.BlendColor(BackColor, SkinManager.BackgroundFocusColor, SkinManager.BackgroundFocusColor.A) : //Focused
@@ -1223,14 +1242,17 @@ namespace MaterialSkin.Controls
                 DrawHelper.BlendColor(BackColor, SkinManager.BackgroundAlternativeColor, SkinManager.BackgroundAlternativeColor.A); // Normal
 
             // bottom line base
-            g.FillRectangle(SkinManager.DividersAlternativeBrush, 0, LINE_Y, Width, 1);
+            if (!isM3)
+            {
+                g.FillRectangle(SkinManager.DividersAlternativeBrush, 0, LINE_Y, Width, 1);
+            }
 
             if (ReadOnly == false || (ReadOnly && AnimateReadOnly))
             {
                 if (!_animationManager.IsAnimating())
                 {
                     // bottom line
-                    if (isFocused)
+                    if (!isM3 && isFocused)
                     {
                         //No animation
                         g.FillRectangle(isFocused ? UseAccent ? SkinManager.ColorScheme.AccentBrush : SkinManager.ColorScheme.PrimaryBrush : SkinManager.DividersBrush, 0, LINE_Y, Width, isFocused ? 2 : 1);
@@ -1242,9 +1264,12 @@ namespace MaterialSkin.Controls
                     double animationProgress = _animationManager.GetProgress();
 
                     // Line Animation
-                    int LineAnimationWidth = (int)(Width * animationProgress);
-                    int LineAnimationX = (Width / 2) - (LineAnimationWidth / 2);
-                    g.FillRectangle(UseAccent ? SkinManager.ColorScheme.AccentBrush : SkinManager.ColorScheme.PrimaryBrush, LineAnimationX, LINE_Y, LineAnimationWidth, 2);
+                    if (!isM3)
+                    {
+                        int LineAnimationWidth = (int)(Width * animationProgress);
+                        int LineAnimationX = (Width / 2) - (LineAnimationWidth / 2);
+                        g.FillRectangle(UseAccent ? SkinManager.ColorScheme.AccentBrush : SkinManager.ColorScheme.PrimaryBrush, LineAnimationX, LINE_Y, LineAnimationWidth, 2);
+                    }
                 }
             }
         }

@@ -169,150 +169,151 @@
         protected override void OnPaint(PaintEventArgs pevent)
         {
             Graphics g = pevent.Graphics;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
 
             g.Clear(Parent.BackColor);
-            GraphicsPath roundedRectPath = DrawHelper.CreateRoundRect(
-       ClientRectangle.X,
-       ClientRectangle.Y,
-       ClientRectangle.Width,
-       LINE_Y,
-       4); // yourCornerRadius трябва да бъде радиусът на закръглените ъгли
-
-            SolidBrush fillBrush;
-            if (Enabled)
+            using (GraphicsPath roundedRectPath = DrawHelper.CreateRoundRect(
+                ClientRectangle.X,
+                ClientRectangle.Y,
+                ClientRectangle.Width,
+                LINE_Y,
+                isM3 ? 12 : 4))
+            using (SolidBrush fillBrush = new SolidBrush(!Enabled
+                ? SkinManager.BackgroundDisabledColor
+                : Focused
+                    ? SkinManager.BackgroundFocusColor
+                    : MouseState == MouseState.HOVER
+                        ? SkinManager.BackgroundHoverColor
+                        : SkinManager.BackgroundAlternativeColor))
             {
-                if (Focused)
+                g.FillPath(fillBrush, roundedRectPath);
+
+                if (isM3)
                 {
-                    fillBrush = new SolidBrush(SkinManager.BackgroundFocusColor); // Focused
-                }
-                else if (MouseState == MouseState.HOVER)
-                {
-                    fillBrush = new SolidBrush(SkinManager.BackgroundHoverColor); // Hover
-                }
-                else
-                {
-                    fillBrush = new SolidBrush(SkinManager.BackgroundAlternativeColor); // Normal
+                    using (Pen outlinePen = new Pen(Focused || DroppedDown ? (UseAccent ? SkinManager.ActiveColorRoles.Secondary : SkinManager.ActiveColorRoles.Primary) : SkinManager.ActiveColorRoles.OutlineVariant, Focused || DroppedDown ? 2 : 1))
+                    {
+                        g.DrawPath(outlinePen, roundedRectPath);
+                    }
                 }
             }
-            else
-            {
-                fillBrush = new SolidBrush(SkinManager.BackgroundDisabledColor); // Disabled
-            }
-
-            g.FillPath(fillBrush, roundedRectPath);
-
-            // Не забравяйте да освободите ресурсите
-            roundedRectPath.Dispose();
-            fillBrush.Dispose();
 
             //Set color and brush
             Color SelectedColor = new Color();
             if (UseAccent)
-                SelectedColor = SkinManager.ColorScheme.AccentColor;
+                SelectedColor = isM3 ? SkinManager.ActiveColorRoles.Secondary : SkinManager.ColorScheme.AccentColor;
             else
-                SelectedColor = SkinManager.ColorScheme.PrimaryColor;
-            SolidBrush SelectedBrush = new SolidBrush(SelectedColor);
-
-            // Create and Draw the arrow
-            System.Drawing.Drawing2D.GraphicsPath pth = new System.Drawing.Drawing2D.GraphicsPath();
-            PointF TopRight = new PointF(this.Width - 0.5f - SkinManager.FORM_PADDING, (this.Height >> 1) - 2.5f);
-            PointF MidBottom = new PointF(this.Width - 4.5f - SkinManager.FORM_PADDING, (this.Height >> 1) + 2.5f);
-            PointF TopLeft = new PointF(this.Width - 8.5f - SkinManager.FORM_PADDING, (this.Height >> 1) - 2.5f);
-            pth.AddLine(TopLeft, TopRight);
-            pth.AddLine(TopRight, MidBottom);
-
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            g.FillPath((SolidBrush)(Enabled ? DroppedDown || Focused ?
-                SelectedBrush : //DroppedDown or Focused
-                SkinManager.TextHighEmphasisBrush : //Not DroppedDown and not Focused
-                new SolidBrush(DrawHelper.BlendColor(SkinManager.TextHighEmphasisColor, SkinManager.SwitchOffDisabledThumbColor, 197))  //Disabled
-                ), pth);
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
-
-            // HintText
-            bool userTextPresent = SelectedIndex >= 0;
-            Rectangle hintRect = new Rectangle(SkinManager.FORM_PADDING, ClientRectangle.Y, Width, LINE_Y);
-            int hintTextSize = 16;
-
-            // bottom line base
-            g.FillRectangle(SkinManager.DividersAlternativeBrush, 0, LINE_Y, Width, 1);
-
-            if (!_animationManager.IsAnimating())
+                SelectedColor = isM3 ? SkinManager.ActiveColorRoles.Primary : SkinManager.ColorScheme.PrimaryColor;
+            using (SolidBrush SelectedBrush = new SolidBrush(SelectedColor))
             {
-                // No animation
-                if (hasHint && UseTallSize && (DroppedDown || Focused || SelectedIndex >= 0))
+
+                // Create and Draw the arrow
+                using (System.Drawing.Drawing2D.GraphicsPath pth = new System.Drawing.Drawing2D.GraphicsPath())
                 {
-                    // hint text
-                    hintRect = new Rectangle(SkinManager.FORM_PADDING, TEXT_SMALL_Y, Width, TEXT_SMALL_SIZE);
-                    hintTextSize = 12;
+                    PointF TopRight = new PointF(this.Width - 0.5f - SkinManager.FORM_PADDING, (this.Height >> 1) - 2.5f);
+                    PointF MidBottom = new PointF(this.Width - 4.5f - SkinManager.FORM_PADDING, (this.Height >> 1) + 2.5f);
+                    PointF TopLeft = new PointF(this.Width - 8.5f - SkinManager.FORM_PADDING, (this.Height >> 1) - 2.5f);
+                    pth.AddLine(TopLeft, TopRight);
+                    pth.AddLine(TopRight, MidBottom);
+
+                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    using (SolidBrush arrowBrush = Enabled ? new SolidBrush(DroppedDown || Focused ? SelectedColor : (isM3 ? SkinManager.ActiveColorRoles.OnSurfaceVariant : SkinManager.TextHighEmphasisColor)) : new SolidBrush(DrawHelper.BlendColor(SkinManager.TextHighEmphasisColor, SkinManager.SwitchOffDisabledThumbColor, 197)))
+                    {
+                        g.FillPath(arrowBrush, pth);
+                    }
+                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
                 }
 
-                // bottom line
-                if (DroppedDown || Focused)
-                {
-                    g.FillRectangle(SelectedBrush, 0, LINE_Y, Width, 2);
-                }
-            }
-            else
-            {
-                // Animate - Focus got/lost
-                double animationProgress = _animationManager.GetProgress();
+                // HintText
+                bool userTextPresent = SelectedIndex >= 0;
+                Rectangle hintRect = new Rectangle(SkinManager.FORM_PADDING, ClientRectangle.Y, Width, LINE_Y);
+                int hintTextSize = 16;
 
-                // hint Animation
-                if (hasHint && UseTallSize)
+                // bottom line base
+                if (!isM3)
                 {
-                    hintRect = new Rectangle(
-                        SkinManager.FORM_PADDING,
-                        userTextPresent && !_animationManager.IsAnimating() ? (TEXT_SMALL_Y) : ClientRectangle.Y + (int)((TEXT_SMALL_Y - ClientRectangle.Y) * animationProgress),
-                        Width,
-                        userTextPresent && !_animationManager.IsAnimating() ? (TEXT_SMALL_SIZE) : (int)(LINE_Y + (TEXT_SMALL_SIZE - LINE_Y) * animationProgress));
-                    hintTextSize = userTextPresent && !_animationManager.IsAnimating() ? 12 : (int)(16 + (12 - 16) * animationProgress);
+                    g.FillRectangle(SkinManager.DividersAlternativeBrush, 0, LINE_Y, Width, 1);
                 }
 
-                // Line Animation
-                int LineAnimationWidth = (int)(Width * animationProgress);
-                int LineAnimationX = (Width / 2) - (LineAnimationWidth / 2);
-                g.FillRectangle(SelectedBrush, LineAnimationX, LINE_Y, LineAnimationWidth, 2);
-            }
+                if (!_animationManager.IsAnimating())
+                {
+                    // No animation
+                    if (hasHint && UseTallSize && (DroppedDown || Focused || SelectedIndex >= 0))
+                    {
+                        // hint text
+                        hintRect = new Rectangle(SkinManager.FORM_PADDING, TEXT_SMALL_Y, Width, TEXT_SMALL_SIZE);
+                        hintTextSize = 12;
+                    }
 
-            // Calc text Rect
-            Rectangle textRect = new Rectangle(
-                SkinManager.FORM_PADDING,
-                hasHint && UseTallSize ? (hintRect.Y + hintRect.Height) - 2 : ClientRectangle.Y,
-                ClientRectangle.Width - SkinManager.FORM_PADDING * 3 - 8,
-                hasHint && UseTallSize ? LINE_Y - (hintRect.Y + hintRect.Height) : LINE_Y);
+                    // bottom line
+                    if (!isM3 && (DroppedDown || Focused))
+                    {
+                        g.FillRectangle(SelectedBrush, 0, LINE_Y, Width, 2);
+                    }
+                }
+                else
+                {
+                    // Animate - Focus got/lost
+                    double animationProgress = _animationManager.GetProgress();
 
-            g.Clip = new Region(textRect);
+                    // hint Animation
+                    if (hasHint && UseTallSize)
+                    {
+                        hintRect = new Rectangle(
+                            SkinManager.FORM_PADDING,
+                            userTextPresent && !_animationManager.IsAnimating() ? (TEXT_SMALL_Y) : ClientRectangle.Y + (int)((TEXT_SMALL_Y - ClientRectangle.Y) * animationProgress),
+                            Width,
+                            userTextPresent && !_animationManager.IsAnimating() ? (TEXT_SMALL_SIZE) : (int)(LINE_Y + (TEXT_SMALL_SIZE - LINE_Y) * animationProgress));
+                        hintTextSize = userTextPresent && !_animationManager.IsAnimating() ? 12 : (int)(16 + (12 - 16) * animationProgress);
+                    }
 
-            using (NativeTextRenderer NativeText = new NativeTextRenderer(g))
-            {
-                // Draw user text
-                NativeText.DrawTransparentText(
-                    Text,
-                    SkinManager.getLogFontByType(MaterialSkinManager.fontType.Subtitle1),
-                    Enabled ? SkinManager.TextHighEmphasisColor : SkinManager.TextDisabledOrHintColor,
-                    textRect.Location,
-                    textRect.Size,
-                    NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);
-            }
+                    // Line Animation
+                    if (!isM3)
+                    {
+                        int LineAnimationWidth = (int)(Width * animationProgress);
+                        int LineAnimationX = (Width / 2) - (LineAnimationWidth / 2);
+                        g.FillRectangle(SelectedBrush, LineAnimationX, LINE_Y, LineAnimationWidth, 2);
+                    }
+                }
 
-            g.ResetClip();
+                // Calc text Rect
+                Rectangle textRect = new Rectangle(
+                    SkinManager.FORM_PADDING,
+                    hasHint && UseTallSize ? (hintRect.Y + hintRect.Height) - 2 : ClientRectangle.Y,
+                    ClientRectangle.Width - SkinManager.FORM_PADDING * 3 - 8,
+                    hasHint && UseTallSize ? LINE_Y - (hintRect.Y + hintRect.Height) : LINE_Y);
 
-            // Draw hint text
-            if (hasHint && (UseTallSize || String.IsNullOrEmpty(Text)))
-            {
+                g.Clip = new Region(textRect);
+
                 using (NativeTextRenderer NativeText = new NativeTextRenderer(g))
                 {
+                    // Draw user text
                     NativeText.DrawTransparentText(
-                    Hint,
-                    SkinManager.getTextBoxFontBySize(hintTextSize),
-                    Enabled ? DroppedDown || Focused ? 
-                    SelectedColor : // Focus 
-                    SkinManager.TextMediumEmphasisColor : // not focused
-                    SkinManager.TextDisabledOrHintColor, // Disabled
-                    hintRect.Location,
-                    hintRect.Size,
-                    NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);
+                        Text,
+                        SkinManager.getLogFontByType(isM3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Subtitle1),
+                        Enabled ? SkinManager.TextHighEmphasisColor : SkinManager.TextDisabledOrHintColor,
+                        textRect.Location,
+                        textRect.Size,
+                        NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);
+                }
+
+                g.ResetClip();
+
+                // Draw hint text
+                if (hasHint && (UseTallSize || String.IsNullOrEmpty(Text)))
+                {
+                    using (NativeTextRenderer NativeText = new NativeTextRenderer(g))
+                    {
+                        NativeText.DrawTransparentText(
+                        Hint,
+                        SkinManager.getTextBoxFontBySize(hintTextSize),
+                        Enabled ? DroppedDown || Focused ? 
+                        SelectedColor : // Focus 
+                        (isM3 ? SkinManager.ActiveColorRoles.OnSurfaceVariant : SkinManager.TextMediumEmphasisColor) : // not focused
+                        SkinManager.TextDisabledOrHintColor, // Disabled
+                        hintRect.Location,
+                        hintRect.Size,
+                        NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);
+                    }
                 }
             }
         }
@@ -327,14 +328,21 @@
             if (e.Index < 0 || e.Index > Items.Count || !Focused) return;
 
             Graphics g = e.Graphics;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
 
             // Draw the background of the item.
-            g.FillRectangle(SkinManager.BackgroundBrush, e.Bounds);
+            using (Brush backgroundBrush = isM3 ? new SolidBrush(SkinManager.ActiveColorRoles.SurfaceContainer) : SkinManager.BackgroundBrush)
+            {
+                g.FillRectangle(backgroundBrush, e.Bounds);
+            }
 
             // Hover
             if (e.State.HasFlag(DrawItemState.Focus)) // Focus == hover
             {
-                g.FillRectangle(SkinManager.BackgroundHoverBrush, e.Bounds);
+                using (Brush hoverBrush = new SolidBrush(isM3 ? SkinManager.ActiveColorRoles.SecondaryContainer : SkinManager.BackgroundHoverColor))
+                {
+                    g.FillRectangle(hoverBrush, e.Bounds);
+                }
             }
             
             string Text = "";
@@ -360,7 +368,7 @@
             {
                 NativeText.DrawTransparentText(
                 Text,
-                SkinManager.getFontByType(MaterialSkinManager.fontType.Subtitle1),
+                SkinManager.getFontByType(SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Subtitle1),
                 SkinManager.TextHighEmphasisNoAlphaColor,
                 new Point(e.Bounds.Location.X + SkinManager.FORM_PADDING, e.Bounds.Location.Y),
                 new Size(e.Bounds.Size.Width - SkinManager.FORM_PADDING * 2, e.Bounds.Size.Height),
