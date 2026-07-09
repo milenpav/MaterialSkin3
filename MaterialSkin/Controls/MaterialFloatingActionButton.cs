@@ -179,19 +179,28 @@
         protected override void OnPaint(PaintEventArgs pevent)
         {
             var g = pevent.Graphics;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
 
             g.Clear(Parent.BackColor);
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
             // Paint shadow on element to blend with the parent shadow
-            DrawHelper.DrawRoundShadow(g, fabBounds);
+            if (DrawShadows)
+            {
+                DrawHelper.DrawRoundShadow(g, fabBounds);
+            }
+
+            Color fabColor = isM3 ? SkinManager.ActiveColorRoles.SecondaryContainer : SkinManager.ColorScheme.AccentColor;
+            Color fabHoverColor = isM3 ? SkinManager.ActiveColorRoles.SecondaryContainer.Lighten(0.08f) : SkinManager.ColorScheme.AccentColor.Lighten(0.25f);
+            Color fabDisabledColor = isM3
+                ? DrawHelper.BlendColor(SkinManager.ActiveColorRoles.SecondaryContainer, SkinManager.SwitchOffDisabledThumbColor, 160)
+                : DrawHelper.BlendColor(SkinManager.ColorScheme.AccentColor, SkinManager.SwitchOffDisabledThumbColor, 197);
 
             // draw fab
-            g.FillEllipse(Enabled ? _mouseHover ? 
-                new SolidBrush(SkinManager.ColorScheme.AccentColor.Lighten(0.25f)) : 
-                SkinManager.ColorScheme.AccentBrush :
-                new SolidBrush(DrawHelper.BlendColor(SkinManager.ColorScheme.AccentColor, SkinManager.SwitchOffDisabledThumbColor, 197)), 
-                fabBounds);
+            using (var fabBrush = new SolidBrush(Enabled ? (_mouseHover ? fabHoverColor : fabColor) : fabDisabledColor))
+            {
+                g.FillEllipse(fabBrush, fabBounds);
+            }
 
             if (_animationManager.IsAnimating())
             {
@@ -206,9 +215,11 @@
                 {
                     var animationValue = _animationManager.GetProgress(i);
                     var animationSource = _animationManager.GetSource(i);
-                    var rippleBrush = new SolidBrush(Color.FromArgb((int)(51 - (animationValue * 50)), Color.White));
-                    var rippleSize = (int)(animationValue * Width * 2);
-                    g.FillEllipse(rippleBrush, new Rectangle(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize));
+                    using (var rippleBrush = new SolidBrush(Color.FromArgb((int)(51 - (animationValue * 50)), isM3 ? SkinManager.ActiveColorRoles.OnSecondaryContainer : Color.White)))
+                    {
+                        var rippleSize = (int)(animationValue * Width * 2);
+                        g.FillEllipse(rippleBrush, new Rectangle(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize));
+                    }
                 }
 
                 g.EndContainer(gcont);

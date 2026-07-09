@@ -2,6 +2,7 @@
 {
     using System;
     using System.ComponentModel;
+    using System.Drawing;
     using System.Runtime.InteropServices;
     using System.Windows.Forms;
 
@@ -93,12 +94,14 @@
         {
             base.OnCreateControl();
             this.Multiline = true;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
 
             BorderStyle = BorderStyle.None;
-            Font = SkinManager.getFontByType(MaterialSkinManager.fontType.Body1);
-            BackColor = SkinManager.BackgroundColor;
+            Font = SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Body1);
+            BackColor = isM3 ? SkinManager.ActiveColorRoles.SurfaceContainerHigh : SkinManager.BackgroundColor;
             ForeColor = SkinManager.TextHighEmphasisColor;
-            BackColorChanged += (sender, args) => BackColor = SkinManager.BackgroundColor;
+            Padding = isM3 ? new Padding(16, 12, 16, 12) : Padding.Empty;
+            BackColorChanged += (sender, args) => BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? SkinManager.ActiveColorRoles.SurfaceContainerHigh : SkinManager.BackgroundColor;
             ForeColorChanged += (sender, args) => ForeColor = SkinManager.TextHighEmphasisColor;
         }
     }

@@ -2,13 +2,17 @@
 {
     using System;
     using System.ComponentModel;
+    using System.Drawing;
     using System.Windows.Forms;
 
     public class MaterialTabControl : TabControl, IMaterialControl
     {
         public MaterialTabControl()
         {
-            Multiline = true;
+            Multiline = false;
+            SizeMode = TabSizeMode.Fixed;
+            ItemSize = new Size(0, 1);
+            Padding = new Point(0, 0);
         }
 
         [Browsable(false)]
@@ -24,6 +28,19 @@
         {
             if (m.Msg == 0x1328 && !DesignMode) m.Result = (IntPtr)1;
             else base.WndProc(ref m);
+        }
+
+        protected override void OnCreateControl()
+        {
+            base.OnCreateControl();
+
+            if (!DesignMode)
+            {
+                Multiline = false;
+                SizeMode = TabSizeMode.Fixed;
+                ItemSize = new Size(0, 1);
+                Padding = new Point(0, 0);
+            }
         }
         
         protected override void OnControlAdded(ControlEventArgs e)

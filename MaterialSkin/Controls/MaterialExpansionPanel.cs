@@ -214,6 +214,7 @@ namespace MaterialSkin.Controls
 
         public MaterialExpansionPanel()
         {
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
             ShowValidationButtons = true;
             ValidationButtonEnable = false;
             ValidationButtonText = "SAVE";
@@ -227,11 +228,11 @@ namespace MaterialSkin.Controls
             AutoScroll = false;
 
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
-            BackColor = SkinManager.BackgroundColor;
+            BackColor = isM3 ? SkinManager.ActiveColorRoles.SurfaceContainer : SkinManager.BackgroundColor;
             ForeColor = SkinManager.TextHighEmphasisColor;
 
-            Padding = new Padding(24, 64, 24, 16);
-            Margin = new Padding( 3, 16,  3, 16);
+            Padding = isM3 ? new Padding(24, 72, 24, 24) : new Padding(24, 64, 24, 16);
+            Margin = isM3 ? new Padding(8, 20, 8, 20) : new Padding(3, 16, 3, 16);
             Size = new Size(480, ExpandHeight);
             							 
             //CollapseOrExpand();
@@ -291,7 +292,7 @@ namespace MaterialSkin.Controls
         protected override void OnCreateControl()
         {
             base.OnCreateControl();
-            Font = SkinManager.getFontByType(MaterialSkinManager.fontType.Body1);
+            Font = SkinManager.getFontByType(SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body1);
         }
 
         protected override void InitLayout()
@@ -329,6 +330,7 @@ namespace MaterialSkin.Controls
             }
 
             if (!_drawShadows || Parent == null) return;
+            if (SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3) return;
 
             // paint shadow on parent
             Graphics gp = e.Graphics;
@@ -357,7 +359,7 @@ namespace MaterialSkin.Controls
         protected override void OnBackColorChanged(EventArgs e)
         {
             base.OnBackColorChanged(e);
-            BackColor = SkinManager.BackgroundColor;
+            BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? SkinManager.ActiveColorRoles.SurfaceContainer : SkinManager.BackgroundColor;
         }
 
         protected override void OnResize(EventArgs e)
@@ -453,6 +455,7 @@ namespace MaterialSkin.Controls
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
             g.TextRenderingHint = TextRenderingHint.AntiAlias;
 
             g.Clear(Parent.BackColor);
@@ -461,10 +464,13 @@ namespace MaterialSkin.Controls
             RectangleF expansionPanelRectF = new RectangleF(ClientRectangle.Location, ClientRectangle.Size);
             expansionPanelRectF.X -= 0.5f;
             expansionPanelRectF.Y -= 0.5f;
-            GraphicsPath expansionPanelPath = DrawHelper.CreateRoundRect(expansionPanelRectF, 2);
+            GraphicsPath expansionPanelPath = DrawHelper.CreateRoundRect(expansionPanelRectF, isM3 ? 16 : 2);
 
             // button shadow (blend with form shadow)
-            DrawHelper.DrawSquareShadow(g, ClientRectangle);
+            if (!isM3 && _drawShadows)
+            {
+                DrawHelper.DrawSquareShadow(g, ClientRectangle);
+            }
 
             // Draw expansion panel
             // Disabled
@@ -483,13 +489,16 @@ namespace MaterialSkin.Controls
                     RectangleF expansionPanelBorderRectF = new RectangleF(ClientRectangle.X + 1, ClientRectangle.Y + 1, ClientRectangle.Width - 2, ClientRectangle.Height - 2);
                     expansionPanelBorderRectF.X -= 0.5f;
                     expansionPanelBorderRectF.Y -= 0.5f;
-                    GraphicsPath expansionPanelBoarderPath = DrawHelper.CreateRoundRect(expansionPanelBorderRectF, 2);
+                    GraphicsPath expansionPanelBoarderPath = DrawHelper.CreateRoundRect(expansionPanelBorderRectF, isM3 ? 16 : 2);
 																					   
-                    g.FillPath(SkinManager.ExpansionPanelFocusBrush, expansionPanelBoarderPath);
+                    using (var hoverBrush = new SolidBrush(isM3 ? SkinManager.ActiveColorRoles.SurfaceContainerHigh : SkinManager.BackgroundHoverColor))
+                    {
+                        g.FillPath(hoverBrush, expansionPanelBoarderPath);
+                    }
                 }
                 else
                 {
-                    using (SolidBrush normalBrush = new SolidBrush(SkinManager.BackgroundColor))
+                    using (SolidBrush normalBrush = new SolidBrush(isM3 ? SkinManager.ActiveColorRoles.SurfaceContainer : SkinManager.BackgroundColor))
                     {
                         g.FillPath(normalBrush, expansionPanelPath);
                     }
@@ -509,8 +518,8 @@ namespace MaterialSkin.Controls
                 // Draw header text
                 NativeText.DrawTransparentText(
                     _titleHeader,
-                    SkinManager.getLogFontByType(MaterialSkinManager.fontType.Body1),
-                    Enabled ? SkinManager.TextHighEmphasisColor : SkinManager.TextDisabledOrHintColor,
+                    SkinManager.getLogFontByType(isM3 ? MaterialSkinManager.fontType.TitleSmall : MaterialSkinManager.fontType.Body1),
+                    Enabled ? (isM3 ? SkinManager.ActiveColorRoles.OnSurface : SkinManager.TextHighEmphasisColor) : SkinManager.TextDisabledOrHintColor,
                     headerRect.Location,
                     headerRect.Size,
                     NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);
@@ -531,8 +540,8 @@ namespace MaterialSkin.Controls
                     // Draw description header text 
                     NativeText.DrawTransparentText(
                     _descriptionHeader,
-                    SkinManager.getLogFontByType(MaterialSkinManager.fontType.Body1),
-                     SkinManager.TextDisabledOrHintColor,
+                    SkinManager.getLogFontByType(isM3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body1),
+                     isM3 ? SkinManager.ActiveColorRoles.OnSurfaceVariant : SkinManager.TextDisabledOrHintColor,
                     headerDescriptionRect.Location,
                     headerDescriptionRect.Size,
                     NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);
@@ -541,7 +550,10 @@ namespace MaterialSkin.Controls
 
             if (_showCollapseExpand==true)
             {
-                using (var formButtonsPen = new Pen(_useAccentColor && Enabled ? SkinManager.ColorScheme.AccentColor : SkinManager.TextDisabledOrHintColor, 2))
+                using (var formButtonsPen = new Pen(
+                    isM3
+                        ? (_useAccentColor && Enabled ? SkinManager.ActiveColorRoles.Secondary : SkinManager.ActiveColorRoles.OnSurfaceVariant)
+                        : (_useAccentColor && Enabled ? SkinManager.ColorScheme.AccentColor : SkinManager.TextDisabledOrHintColor), 2))
                 {
                     if (_collapse)
                     {
@@ -571,7 +583,18 @@ namespace MaterialSkin.Controls
             if (!_collapse && _showValidationButtons)
             {
                 //Draw divider
-                g.DrawLine(new Pen(SkinManager.DividersColor, 1), new Point(0, Height - _footerHeight), new Point(Width, Height - _footerHeight));
+                using (var dividerPen = new Pen(isM3 ? SkinManager.ActiveColorRoles.OutlineVariant : SkinManager.DividersColor, 1))
+                {
+                    g.DrawLine(dividerPen, new Point(0, Height - _footerHeight), new Point(Width, Height - _footerHeight));
+                }
+            }
+
+            if (isM3)
+            {
+                using (var outlinePen = new Pen(SkinManager.ActiveColorRoles.OutlineVariant, 1))
+                {
+                    g.DrawPath(outlinePen, expansionPanelPath);
+                }
             }
         }
 
@@ -583,7 +606,7 @@ namespace MaterialSkin.Controls
             {
                 _headerHeight = _headerHeightCollapse;
                 this.Height = _headerHeightCollapse;
-                Margin = new Padding(16, 1, 16, 0);
+                Margin = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? new Padding(8, 8, 8, 0) : new Padding(16, 1, 16, 0);
 
                 // Is the event registered?
                 if (PanelCollapse != null)
@@ -594,7 +617,7 @@ namespace MaterialSkin.Controls
             {
                 _headerHeight = _headerHeightExpand;
                 this.Height = _expandHeight;
-                Margin = new Padding(16, 16, 16, 16);
+                Margin = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? new Padding(8, 16, 8, 16) : new Padding(16, 16, 16, 16);
 
                 // Is the event registered?
                 if (PanelExpand != null)

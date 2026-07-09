@@ -276,7 +276,7 @@
 
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
             AutoSize = true;
-            Margin = new Padding(4, 6, 4, 6);
+            Margin = Padding.Empty;
             Padding = new Padding(0);
         }
 

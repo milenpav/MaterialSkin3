@@ -17,6 +17,11 @@
         private const int BUTTON_HEIGHT = 36;
         private const int TEXT_TOP_PADDING = 17;
         private const int TEXT_BOTTOM_PADDING = 28;
+        private const int USER_DIALOG_MIN_WIDTH = 560;
+        private const int USER_DIALOG_MIN_HEIGHT = 360;
+        private const int USER_DIALOG_MARGIN = 24;
+        private const int USER_DIALOG_CONTENT_OVERFLOW_WIDTH = 0;
+        private const int USER_DIALOG_CONTENT_OVERFLOW_HEIGHT = 0;
         private int _header_Height = 40;
 
         private MaterialButton _validationButton = new MaterialButton();
@@ -30,7 +35,8 @@
         private String _title;
         private readonly string title;
         private UserControl _userControl;
-        private bool _userControlShellSized;
+        private bool _userControlLayoutInitialized;
+        private readonly Size _initialUserControlSize;
         private int CornerRadius => SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? 28 : 6;
         private MaterialSkinManager.fontType DialogTitleFont => SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? MaterialSkinManager.fontType.HeadlineSmall : MaterialSkinManager.fontType.H6;
         private MaterialSkinManager.fontType DialogBodyFont => SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Body1;
@@ -161,6 +167,7 @@
         {
             this.title=title;
             _userControl = userControl;
+            _initialUserControlSize = userControl?.Size ?? Size.Empty;
             _formOverlay = new Form
             {
                 BackColor = Color.Black,
@@ -194,6 +201,7 @@
             MinimizeBox=false;
             StartPosition = FormStartPosition.CenterParent;
 
+            AutoSize = false;
             AutoSizeMode = AutoSizeMode.GrowAndShrink;
             
             BackColor = SkinManager.BackgroundColor;
@@ -206,16 +214,21 @@
             _userControl.Margin = Padding.Empty;
             _userControl.Location = Point.Empty;
             _userControl.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            if (_initialUserControlSize.Width > 0 && _initialUserControlSize.Height > 0)
+            {
+                _userControl.Size = _initialUserControlSize;
+                _userControl.MinimumSize = _initialUserControlSize;
+            }
             _userControl.PerformLayout();
 
             _contentHost = new Panel
             {
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                AutoSize = false,
                 BackColor = SkinManager.BackgroundColor,
                 Margin = Padding.Empty,
-                Padding = new Padding(24, 16, 24, 24),
-                Dock = DockStyle.Top
+                Padding = Padding.Empty,
+                Dock = DockStyle.None,
+                Location = Point.Empty
             };
             _contentHost.Controls.Add(_userControl);
 
@@ -231,8 +244,8 @@
 
             Rectangle workArea = Screen.FromControl(ParentForm).WorkingArea;
 
-            MinimumSize = new Size(Math.Min(560, workArea.Width - 48), Math.Min(360, workArea.Height - 48));
-            MaximumSize = new Size(workArea.Width - 24, workArea.Height - 24);
+            MinimumSize = new Size(Math.Min(USER_DIALOG_MIN_WIDTH, workArea.Width - (USER_DIALOG_MARGIN * 2)), Math.Min(USER_DIALOG_MIN_HEIGHT, workArea.Height - (USER_DIALOG_MARGIN * 2)));
+            MaximumSize = new Size(workArea.Width - USER_DIALOG_MARGIN, workArea.Height - USER_DIALOG_MARGIN);
             Size = MinimumSize;
 
             Controls.Add(_userControlScrollPanel);
@@ -280,7 +293,7 @@
 
             if (_userControl != null)
             {
-                UpdateUserControlShellSize();
+                PerformUserControlDialogLayout();
             }
 
             Location = new Point(Convert.ToInt32(Owner.Location.X + (Owner.Width / 2) - (Width / 2)), Convert.ToInt32(Owner.Location.Y + (Owner.Height/2) - (Height / 2)));
@@ -293,7 +306,13 @@
 
             if (_userControl != null)
             {
-                BeginInvoke(new Action(UpdateUserControlShellSize));
+                BeginInvoke(new Action(() =>
+                {
+                    if (!IsDisposed)
+                    {
+                        PerformUserControlDialogLayout();
+                    }
+                }));
             }
         }
 
@@ -403,93 +422,80 @@
             base.OnClosing(e);
         }
 
-        private void UpdateUserControlShellSize()
+        protected override void OnLayout(LayoutEventArgs levent)
+        {
+            base.OnLayout(levent);
+
+            if (_userControl != null && Visible && !_userControlLayoutInitialized)
+            {
+                _userControlLayoutInitialized = true;
+                BeginInvoke(new Action(() =>
+                {
+                    if (!IsDisposed)
+                    {
+                        PerformUserControlDialogLayout();
+                    }
+                }));
+            }
+        }
+
+        private void PerformUserControlDialogLayout()
         {
             if (_userControl == null || Owner == null)
             {
                 return;
             }
 
+            SuspendLayout();
             _userControl.PerformLayout();
-            _contentHost?.PerformLayout();
-            _userControlScrollPanel?.PerformLayout();
 
             Rectangle workArea = Screen.FromControl(Owner).WorkingArea;
-            Size contentSize = MeasureControlContent(_userControl);
+            Size contentSize = MeasureUserControlLayout(_userControl, _initialUserControlSize);
 
-            int horizontalChrome = 48;
-            int verticalChrome = CompactHeaderHeight + 40;
-            int width = Math.Min(Math.Max(contentSize.Width + horizontalChrome, MinimumSize.Width), MaximumSize.Width);
-            int height = Math.Min(Math.Max(contentSize.Height + verticalChrome, MinimumSize.Height), MaximumSize.Height);
+            int viewportWidth = contentSize.Width + _contentHost.Padding.Horizontal + USER_DIALOG_CONTENT_OVERFLOW_WIDTH;
+            int viewportHeight = contentSize.Height + _contentHost.Padding.Vertical + USER_DIALOG_CONTENT_OVERFLOW_HEIGHT;
+
+            int width = Math.Min(Math.Max(viewportWidth + Padding.Horizontal, MinimumSize.Width), MaximumSize.Width);
+            int height = Math.Min(Math.Max(viewportHeight + Padding.Vertical, MinimumSize.Height), MaximumSize.Height);
+
+            _contentHost.Size = new Size(
+                Math.Max(contentSize.Width + _contentHost.Padding.Horizontal, _userControlScrollPanel.ClientSize.Width),
+                Math.Max(contentSize.Height + _contentHost.Padding.Vertical, _userControlScrollPanel.ClientSize.Height));
+            _userControl.Location = new Point(_contentHost.Padding.Left, _contentHost.Padding.Top);
 
             _userControlScrollPanel.AutoScrollMinSize = new Size(
-                Math.Max(0, contentSize.Width + 48),
-                Math.Max(0, contentSize.Height + 40));
+                Math.Max(0, contentSize.Width + _contentHost.Padding.Horizontal),
+                Math.Max(0, contentSize.Height + _contentHost.Padding.Vertical));
 
-            Size = new Size(width, height);
+            ClientSize = new Size(width, height);
+            _contentHost.Size = new Size(
+                Math.Max(contentSize.Width + _contentHost.Padding.Horizontal, _userControlScrollPanel.ClientSize.Width),
+                Math.Max(contentSize.Height + _contentHost.Padding.Vertical, _userControlScrollPanel.ClientSize.Height));
             Location = new Point(
                 workArea.Left + Math.Max(0, (workArea.Width - Width) / 2),
                 workArea.Top + Math.Max(0, (workArea.Height - Height) / 2));
-
-            if (!_userControlShellSized)
-            {
-                _userControlShellSized = true;
-                BeginInvoke(new Action(() =>
-                {
-                    if (!IsDisposed)
-                    {
-                        UpdateUserControlShellSize();
-                    }
-                }));
-            }
+            ResumeLayout(true);
         }
 
-        private static Size MeasureControlContent(Control control)
+        private static Size MeasureUserControlLayout(Control control, Size baselineSize)
         {
-            Rectangle bounds = Rectangle.Empty;
-            MeasureVisibleChildBounds(control, control, ref bounds);
+            control.SuspendLayout();
+            control.PerformLayout();
+            Size preferredSize = control.GetPreferredSize(Size.Empty);
+            control.ResumeLayout(true);
 
-            if (bounds.IsEmpty)
+            int width = Math.Max(Math.Max(control.Width, preferredSize.Width), baselineSize.Width);
+            int height = Math.Max(Math.Max(control.Height, preferredSize.Height), baselineSize.Height);
+
+            if (width <= 0 || height <= 0)
             {
-                Size fallback = control.PreferredSize;
-                if (fallback.Width <= 0 || fallback.Height <= 0)
-                {
-                    fallback = control.Size;
-                }
-
-                return new Size(
-                    Math.Max(0, fallback.Width + control.Padding.Horizontal),
-                    Math.Max(0, fallback.Height + control.Padding.Vertical));
+                width = Math.Max(width, control.DisplayRectangle.Width);
+                height = Math.Max(height, control.DisplayRectangle.Height);
             }
 
             return new Size(
-                Math.Max(0, bounds.Right + control.Padding.Right),
-                Math.Max(0, bounds.Bottom + control.Padding.Bottom));
-        }
-
-        private static void MeasureVisibleChildBounds(Control root, Control parent, ref Rectangle bounds)
-        {
-            foreach (Control child in parent.Controls)
-            {
-                if (!child.Visible)
-                {
-                    continue;
-                }
-
-                Rectangle childBounds = root.RectangleToClient(child.RectangleToScreen(child.ClientRectangle));
-                childBounds = Rectangle.FromLTRB(
-                    childBounds.Left - child.Margin.Left,
-                    childBounds.Top - child.Margin.Top,
-                    childBounds.Right + child.Margin.Right,
-                    childBounds.Bottom + child.Margin.Bottom);
-
-                bounds = bounds.IsEmpty ? childBounds : Rectangle.Union(bounds, childBounds);
-
-                if (child.Controls.Count > 0)
-                {
-                    MeasureVisibleChildBounds(root, child, ref bounds);
-                }
-            }
+                Math.Max(0, width + control.Margin.Horizontal),
+                Math.Max(0, height + control.Margin.Vertical));
         }
 
         /// <summary>
@@ -516,12 +522,12 @@
             // 
             // MaterialDialog
             // 
-            this.AutoSize = true;
+            this.AutoSize = false;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(560, 182);
             this.Name = "MaterialDialog";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            this.WindowState = System.Windows.Forms.FormWindowState.Normal;
             this.ResumeLayout(false);
 
         }

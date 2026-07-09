@@ -439,28 +439,68 @@ namespace MaterialSkin.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            DrawScrollBar(e.Graphics, MaterialSkinManager.Instance.CardsColor, SkinManager.SwitchOffTrackColor, useAccentColor ? MaterialSkinManager.Instance.ColorScheme.AccentColor : MaterialSkinManager.Instance.ColorScheme.PrimaryColor);
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
+            DrawScrollBar(
+                e.Graphics,
+                isM3 ? SkinManager.ActiveColorRoles.SurfaceContainer : MaterialSkinManager.Instance.CardsColor,
+                isM3 ? SkinManager.ActiveColorRoles.OutlineVariant : SkinManager.SwitchOffTrackColor,
+                isM3
+                    ? (useAccentColor ? SkinManager.ActiveColorRoles.Secondary : SkinManager.ActiveColorRoles.Primary)
+                    : (useAccentColor ? MaterialSkinManager.Instance.ColorScheme.AccentColor : MaterialSkinManager.Instance.ColorScheme.PrimaryColor));
         }
 
         private void DrawScrollBar(Graphics g, Color backColor, Color thumbColor, Color barColor)
         {
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
             if (useBarColor)
             {
                 using (SolidBrush b = new SolidBrush(barColor))
                 {
-                    g.FillRectangle(b, ClientRectangle);
+                    if (isM3)
+                    {
+                        using (var path = DrawHelper.CreateRoundRect(new RectangleF(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width - 1, ClientRectangle.Height - 1), MaterialOrientation == MaterialScrollOrientation.Vertical ? Width / 2f : Height / 2f))
+                        {
+                            g.FillPath(b, path);
+                        }
+                    }
+                    else
+                    {
+                        g.FillRectangle(b, ClientRectangle);
+                    }
                 }
             }
 
+            Rectangle thumbRect = new Rectangle(thumbRectangle.X - 1, thumbRectangle.Y - 1, thumbRectangle.Width + 2, thumbRectangle.Height + 2);
             using (SolidBrush b = new SolidBrush(backColor))
             {
-                Rectangle thumbRect = new Rectangle(thumbRectangle.X - 1, thumbRectangle.Y - 1, thumbRectangle.Width + 2, thumbRectangle.Height + 2);
-                g.FillRectangle(b, thumbRect);
+                if (isM3)
+                {
+                    using (var trackPath = DrawHelper.CreateRoundRect(new RectangleF(thumbRect.X, thumbRect.Y, thumbRect.Width - 1, thumbRect.Height - 1), MaterialOrientation == MaterialScrollOrientation.Vertical ? thumbRect.Width / 2f : thumbRect.Height / 2f))
+                    {
+                        g.FillPath(b, trackPath);
+                    }
+                }
+                else
+                {
+                    g.FillRectangle(b, thumbRect);
+                }
             }
 
             using (SolidBrush b = new SolidBrush(isHovered ? barColor : thumbColor))
             {
-                g.FillRectangle(b, thumbRectangle);
+                if (isM3)
+                {
+                    using (var thumbPath = DrawHelper.CreateRoundRect(new RectangleF(thumbRectangle.X, thumbRectangle.Y, thumbRectangle.Width - 1, thumbRectangle.Height - 1), MaterialOrientation == MaterialScrollOrientation.Vertical ? thumbRectangle.Width / 2f : thumbRectangle.Height / 2f))
+                    {
+                        g.FillPath(b, thumbPath);
+                    }
+                }
+                else
+                {
+                    g.FillRectangle(b, thumbRectangle);
+                }
             }
         }
 

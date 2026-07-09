@@ -1346,8 +1346,8 @@
         private const int HINT_TEXT_SMALL_Y = 4;
         private const int TOP_PADDING = 8; //10;
         private const int BOTTOM_PADDING = 8; //10;
-        private const int LEFT_PADDING = 16;
-        private const int RIGHT_PADDING = 12;
+        private const int LEFT_PADDING = 10;
+        private const int RIGHT_PADDING = 8;
         private const int ACTIVATION_INDICATOR_HEIGHT = 2;
         private const int HELPER_TEXT_HEIGHT = 16;
         private const int FONT_HEIGHT = 20;

@@ -27,6 +27,7 @@
             this.DoubleBuffered = true;
             this.Items = new ItemsList(this);
             this.AutoScroll = true;
+            this.Padding = new Padding(0, 4, 0, 4);
         }
 
         protected override void OnCreateControl()
@@ -39,8 +40,12 @@
             }
             else
             {
-                BackColorChanged += (sender, args) => BackColor = DrawHelper.BlendColor(Parent.BackColor, SkinManager.BackgroundAlternativeColor, SkinManager.BackgroundAlternativeColor.A);
-                BackColor = DrawHelper.BlendColor(Parent.BackColor, SkinManager.BackgroundAlternativeColor, SkinManager.BackgroundAlternativeColor.A);
+                BackColorChanged += (sender, args) => BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                    ? SkinManager.ActiveColorRoles.SurfaceContainer
+                    : DrawHelper.BlendColor(Parent.BackColor, SkinManager.BackgroundAlternativeColor, SkinManager.BackgroundAlternativeColor.A);
+                BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                    ? SkinManager.ActiveColorRoles.SurfaceContainer
+                    : DrawHelper.BlendColor(Parent.BackColor, SkinManager.BackgroundAlternativeColor, SkinManager.BackgroundAlternativeColor.A);
             }
         }
 
@@ -78,6 +83,8 @@
                 base.Add(value);
                 _parent.Controls.Add(value);
                 value.Dock = DockStyle.Top;
+                value.Margin = Padding.Empty;
+                value.BackColor = Color.Transparent;
             }
 
             public new void Remove(MaterialSkin.Controls.MaterialCheckbox value)

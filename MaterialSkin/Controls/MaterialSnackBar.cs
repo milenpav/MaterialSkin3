@@ -136,9 +136,9 @@
 
             this.ActionButtonText = ActionButtonText;
             this.UseAccentColor = UseAccentColor;
-            Height = 48;
-            MinimumSize = new System.Drawing.Size(344, 48);
-            MaximumSize = new System.Drawing.Size(568, 48);
+            Height = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? 56 : 48;
+            MinimumSize = new System.Drawing.Size(344, Height);
+            MaximumSize = new System.Drawing.Size(568, Height);
 
             this.ShowActionButton = ShowActionButton;
 
@@ -210,7 +210,7 @@
             if (_showActionButton == true)
             {
                 int _buttonWidth = ((TextRenderer.MeasureText(ActionButtonText, SkinManager.getFontByType(MaterialSkinManager.fontType.Button))).Width + 32);
-                Rectangle _actionbuttonBounds = new Rectangle((Width) - BUTTON_PADDING - _buttonWidth, TOP_PADDING_SINGLE_LINE, _buttonWidth, BUTTON_HEIGHT);
+                Rectangle _actionbuttonBounds = new Rectangle((Width) - BUTTON_PADDING - _buttonWidth, SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? 10 : TOP_PADDING_SINGLE_LINE, _buttonWidth, BUTTON_HEIGHT);
                 _actionButton.Width = _actionbuttonBounds.Width;
                 _actionButton.Height = _actionbuttonBounds.Height;
                 _actionButton.Text = _actionButtonText;
@@ -334,7 +334,7 @@
         private void InitializeComponent()
         {
             this.SuspendLayout();
-            this.ClientSize = new System.Drawing.Size(344, 48);
+            this.ClientSize = new System.Drawing.Size(344, 56);
             this.Name = "SnackBar";
             this.ResumeLayout(false);
 

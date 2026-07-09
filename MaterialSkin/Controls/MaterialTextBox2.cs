@@ -1263,8 +1263,8 @@ namespace MaterialSkin.Controls
         private const int ICON_SIZE = 24;
         private const int HINT_TEXT_SMALL_SIZE = 18;
         private const int HINT_TEXT_SMALL_Y = 4;
-        private const int LEFT_PADDING = 16;
-        private const int RIGHT_PADDING = 12;
+        private const int LEFT_PADDING = 10;
+        private const int RIGHT_PADDING = 8;
         private const int ACTIVATION_INDICATOR_HEIGHT = 2;
         private const int HELPER_TEXT_HEIGHT = 16;
         private const int FONT_HEIGHT = 20;
@@ -1468,7 +1468,7 @@ namespace MaterialSkin.Controls
                     // No animation
 
                     // bottom line
-                    if (isFocused)
+                    if (!isM3 && isFocused)
                     {
                         using (var indicatorBrush = new SolidBrush(_errorState ? errorColor : fieldAccentColor))
                         {
@@ -1482,11 +1482,14 @@ namespace MaterialSkin.Controls
                     double animationProgress = _animationManager.GetProgress();
 
                     // Line Animation
-                    int LineAnimationWidth = (int)(Width * animationProgress);
-                    int LineAnimationX = (Width / 2) - (LineAnimationWidth / 2);
-                    using (var animationBrush = new SolidBrush(_errorState ? errorColor : fieldAccentColor))
+                    if (!isM3)
                     {
-                        g.FillRectangle(animationBrush, LineAnimationX, LINE_Y, LineAnimationWidth, 2);
+                        int LineAnimationWidth = (int)(Width * animationProgress);
+                        int LineAnimationX = (Width / 2) - (LineAnimationWidth / 2);
+                        using (var animationBrush = new SolidBrush(_errorState ? errorColor : fieldAccentColor))
+                        {
+                            g.FillRectangle(animationBrush, LineAnimationX, LINE_Y, LineAnimationWidth, 2);
+                        }
                     }
                 }
             }

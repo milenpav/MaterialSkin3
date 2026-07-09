@@ -108,7 +108,9 @@ namespace MaterialSkin.Controls
             this.messageContainer.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.messageContainer.BackColor = this.materialSkinManager.BackgroundColor;
+            this.messageContainer.BackColor = this.materialSkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                ? this.materialSkinManager.ActiveColorRoles.SurfaceContainer
+                : this.materialSkinManager.BackgroundColor;
             this.messageContainer.Controls.Add(this.materialLabel1);
             this.messageContainer.Controls.Add(this.pictureBoxForIcon);
             this.messageContainer.Controls.Add(this.richTextBoxMessage);
@@ -147,7 +149,9 @@ namespace MaterialSkin.Controls
             this.richTextBoxMessage.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.richTextBoxMessage.BackColor = this.materialSkinManager.BackgroundColor;
+            this.richTextBoxMessage.BackColor = this.materialSkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                ? this.materialSkinManager.ActiveColorRoles.SurfaceContainer
+                : this.materialSkinManager.BackgroundColor;
             this.richTextBoxMessage.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.richTextBoxMessage.DataBindings.Add(new System.Windows.Forms.Binding("Text", this.FlexibleMaterialFormBindingSource, "MessageText", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.richTextBoxMessage.Depth = 0;
@@ -236,7 +240,9 @@ namespace MaterialSkin.Controls
             // 
             // FlexibleMaterialForm
             // 
-            this.BackColor = this.materialSkinManager.BackgroundColor;
+            this.BackColor = this.materialSkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                ? this.materialSkinManager.ActiveColorRoles.Surface
+                : this.materialSkinManager.BackgroundColor;
             this.ClientSize = new System.Drawing.Size(384, 208);
             this.Controls.Add(this.leftButton);
             this.Controls.Add(this.middleButton);
@@ -428,8 +434,10 @@ namespace MaterialSkin.Controls
 
             materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.AddFormToManage(this);
-            FONT = materialSkinManager.getFontByType(MaterialSkinManager.fontType.Body1);
-            messageContainer.BackColor = this.BackColor;
+            FONT = materialSkinManager.getFontByType(materialSkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body1);
+            messageContainer.BackColor = materialSkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3
+                ? materialSkinManager.ActiveColorRoles.SurfaceContainer
+                : this.BackColor;
         }
 
         /// <summary>

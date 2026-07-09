@@ -21,10 +21,10 @@
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
             Paint += new PaintEventHandler(paintControl);
-            BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? SkinManager.CardsColor : SkinManager.BackgroundColor;
+            BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? SkinManager.ActiveColorRoles.SurfaceContainer : SkinManager.BackgroundColor;
             ForeColor = SkinManager.TextHighEmphasisColor;
-            Margin = new Padding(SkinManager.FORM_PADDING);
-            Padding = new Padding(SkinManager.FORM_PADDING);
+            Margin = new Padding(SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? 12 : SkinManager.FORM_PADDING);
+            Padding = new Padding(SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? 16 : SkinManager.FORM_PADDING);
         }
 
         private void drawShadowOnParent(object sender, PaintEventArgs e)
@@ -94,7 +94,7 @@
         protected override void OnBackColorChanged(EventArgs e)
         {
             base.OnBackColorChanged(e);
-            BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? SkinManager.CardsColor : SkinManager.BackgroundColor;
+            BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? SkinManager.ActiveColorRoles.SurfaceContainer : SkinManager.BackgroundColor;
         }
 
         private void paintControl(Object sender, PaintEventArgs e)
@@ -108,7 +108,7 @@
             RectangleF cardRectF = new RectangleF(ClientRectangle.Location, ClientRectangle.Size);
             cardRectF.X -= 0.5f;
             cardRectF.Y -= 0.5f;
-            int radius = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? 12 : 4;
+            int radius = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? 16 : 4;
             using (GraphicsPath cardPath = DrawHelper.CreateRoundRect(cardRectF, radius))
             {
                 if (SkinManager.DesignVersion != MaterialSkinManager.MaterialDesignVersion.Material3)

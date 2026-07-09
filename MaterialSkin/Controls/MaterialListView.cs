@@ -52,7 +52,8 @@
             MinimumSize = new Size(200, 100);
 
             SetStyle(ControlStyles.DoubleBuffer | ControlStyles.OptimizedDoubleBuffer, true);
-            BackColor = SkinManager.BackgroundColor;
+            Font = SkinManager.getFontByType(SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body1);
+            BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? SkinManager.ActiveColorRoles.Surface : SkinManager.BackgroundColor;
 
             // Fix for hovers, by default it doesn't redraw
             MouseLocation = new Point(-1, -1);
@@ -90,45 +91,66 @@
         protected override void OnDrawColumnHeader(DrawListViewColumnHeaderEventArgs e)
         {
             Graphics g = e.Graphics;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
 
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
-            g.FillRectangle(new SolidBrush(BackColor), e.Bounds);
+            using (var headerBrush = new SolidBrush(isM3 ? SkinManager.ActiveColorRoles.SurfaceContainer : BackColor))
+            {
+                g.FillRectangle(headerBrush, e.Bounds);
+            }
             // Draw Text
             using (NativeTextRenderer NativeText = new NativeTextRenderer(g))
             {
                 NativeText.DrawTransparentText(
                     e.Header.Text,
-                    SkinManager.getLogFontByType(MaterialSkinManager.fontType.Subtitle2),
-                    Enabled ? SkinManager.TextHighEmphasisNoAlphaColor : SkinManager.TextDisabledOrHintColor,
+                    SkinManager.getLogFontByType(isM3 ? MaterialSkinManager.fontType.TitleSmall : MaterialSkinManager.fontType.Subtitle2),
+                    Enabled ? (isM3 ? SkinManager.ActiveColorRoles.OnSurfaceVariant : SkinManager.TextHighEmphasisNoAlphaColor) : SkinManager.TextDisabledOrHintColor,
                     new Point(e.Bounds.Location.X + PAD, e.Bounds.Location.Y),
                     new Size(e.Bounds.Size.Width - PAD * 2, e.Bounds.Size.Height),
                     NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);
+            }
+            using (var dividerPen = new Pen(isM3 ? SkinManager.ActiveColorRoles.OutlineVariant : SkinManager.DividersColor))
+            {
+                g.DrawLine(dividerPen, e.Bounds.Left, e.Bounds.Bottom - 1, e.Bounds.Right, e.Bounds.Bottom - 1);
             }
         }
 
         protected override void OnDrawItem(DrawListViewItemEventArgs e)
         {
             Graphics g = e.Graphics;
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
 
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
             // Always draw default background
-            g.FillRectangle(SkinManager.BackgroundBrush, e.Bounds);
+            using (var rowBrush = new SolidBrush(isM3 ? SkinManager.ActiveColorRoles.Surface : SkinManager.BackgroundColor))
+            {
+                g.FillRectangle(rowBrush, e.Bounds);
+            }
 
             if (e.Item.Selected)
             {
                 // Selected background
-                g.FillRectangle(SkinManager.BackgroundFocusBrush, e.Bounds);
+                using (var selectedBrush = new SolidBrush(isM3 ? SkinManager.ActiveColorRoles.SecondaryContainer : SkinManager.BackgroundFocusColor))
+                {
+                    g.FillRectangle(selectedBrush, e.Bounds);
+                }
             }
             else if (e.Bounds.Contains(MouseLocation) && MouseState == MouseState.HOVER)
             {
                 // Hover background
-                g.FillRectangle(SkinManager.BackgroundHoverBrush, e.Bounds);
+                using (var hoverBrush = new SolidBrush(isM3 ? SkinManager.ActiveColorRoles.SurfaceContainerHigh : SkinManager.BackgroundHoverColor))
+                {
+                    g.FillRectangle(hoverBrush, e.Bounds);
+                }
             }
 
                 // Draw separator line
-            g.DrawLine(new Pen(SkinManager.DividersColor), e.Bounds.Left, e.Bounds.Y, e.Bounds.Right, e.Bounds.Y);
+            using (var dividerPen = new Pen(isM3 ? SkinManager.ActiveColorRoles.OutlineVariant : SkinManager.DividersColor))
+            {
+                g.DrawLine(dividerPen, e.Bounds.Left, e.Bounds.Y, e.Bounds.Right, e.Bounds.Y);
+            }
 
             foreach (ListViewItem.ListViewSubItem subItem in e.Item.SubItems)
             {
@@ -137,8 +159,8 @@
                 {
                     NativeText.DrawTransparentText(
                         subItem.Text,
-                        SkinManager.getLogFontByType(MaterialSkinManager.fontType.Body2),
-                        Enabled ? SkinManager.TextHighEmphasisNoAlphaColor : SkinManager.TextDisabledOrHintColor,
+                        SkinManager.getLogFontByType(isM3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body2),
+                        Enabled ? (e.Item.Selected && isM3 ? SkinManager.ActiveColorRoles.OnSecondaryContainer : SkinManager.TextHighEmphasisNoAlphaColor) : SkinManager.TextDisabledOrHintColor,
                         new Point(subItem.Bounds.X + PAD, subItem.Bounds.Y),
                         new Size(subItem.Bounds.Width - PAD * 2, subItem.Bounds.Height),
                         NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle);
@@ -208,7 +230,7 @@
         protected override void OnBackColorChanged(EventArgs e)
         {
             base.OnBackColorChanged(e);
-            BackColor = SkinManager.BackgroundColor;
+            BackColor = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? SkinManager.ActiveColorRoles.Surface : SkinManager.BackgroundColor;
         }
     }
 }

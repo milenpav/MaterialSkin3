@@ -90,6 +90,9 @@
         private const int TEXT_SMALL_SIZE = 18;
         private const int TEXT_SMALL_Y = 4;
         private const int BOTTOM_PADDING = 3;
+        private const int ARROW_AREA_WIDTH = 24;
+        private const int FIELD_HORIZONTAL_PADDING = 10;
+        private const int FIELD_ARROW_PADDING = 8;
         private int HEIGHT = 50;
         private int LINE_Y;
 
@@ -209,9 +212,9 @@
                 // Create and Draw the arrow
                 using (System.Drawing.Drawing2D.GraphicsPath pth = new System.Drawing.Drawing2D.GraphicsPath())
                 {
-                    PointF TopRight = new PointF(this.Width - 0.5f - SkinManager.FORM_PADDING, (this.Height >> 1) - 2.5f);
-                    PointF MidBottom = new PointF(this.Width - 4.5f - SkinManager.FORM_PADDING, (this.Height >> 1) + 2.5f);
-                    PointF TopLeft = new PointF(this.Width - 8.5f - SkinManager.FORM_PADDING, (this.Height >> 1) - 2.5f);
+                    PointF TopRight = new PointF(this.Width - 0.5f - FIELD_HORIZONTAL_PADDING, (this.Height >> 1) - 2.5f);
+                    PointF MidBottom = new PointF(this.Width - 4.5f - FIELD_HORIZONTAL_PADDING, (this.Height >> 1) + 2.5f);
+                    PointF TopLeft = new PointF(this.Width - 8.5f - FIELD_HORIZONTAL_PADDING, (this.Height >> 1) - 2.5f);
                     pth.AddLine(TopLeft, TopRight);
                     pth.AddLine(TopRight, MidBottom);
 
@@ -225,7 +228,7 @@
 
                 // HintText
                 bool userTextPresent = SelectedIndex >= 0;
-                Rectangle hintRect = new Rectangle(SkinManager.FORM_PADDING, ClientRectangle.Y, Width, LINE_Y);
+                Rectangle hintRect = new Rectangle(FIELD_HORIZONTAL_PADDING, ClientRectangle.Y, Width, LINE_Y);
                 int hintTextSize = 16;
 
                 // bottom line base
@@ -240,7 +243,7 @@
                     if (hasHint && UseTallSize && (DroppedDown || Focused || SelectedIndex >= 0))
                     {
                         // hint text
-                        hintRect = new Rectangle(SkinManager.FORM_PADDING, TEXT_SMALL_Y, Width, TEXT_SMALL_SIZE);
+                        hintRect = new Rectangle(FIELD_HORIZONTAL_PADDING, TEXT_SMALL_Y, Width, TEXT_SMALL_SIZE);
                         hintTextSize = 12;
                     }
 
@@ -259,7 +262,7 @@
                     if (hasHint && UseTallSize)
                     {
                         hintRect = new Rectangle(
-                            SkinManager.FORM_PADDING,
+                            FIELD_HORIZONTAL_PADDING,
                             userTextPresent && !_animationManager.IsAnimating() ? (TEXT_SMALL_Y) : ClientRectangle.Y + (int)((TEXT_SMALL_Y - ClientRectangle.Y) * animationProgress),
                             Width,
                             userTextPresent && !_animationManager.IsAnimating() ? (TEXT_SMALL_SIZE) : (int)(LINE_Y + (TEXT_SMALL_SIZE - LINE_Y) * animationProgress));
@@ -277,9 +280,9 @@
 
                 // Calc text Rect
                 Rectangle textRect = new Rectangle(
-                    SkinManager.FORM_PADDING,
+                    FIELD_HORIZONTAL_PADDING,
                     hasHint && UseTallSize ? (hintRect.Y + hintRect.Height) - 2 : ClientRectangle.Y,
-                    ClientRectangle.Width - SkinManager.FORM_PADDING * 3 - 8,
+                    ClientRectangle.Width - (FIELD_HORIZONTAL_PADDING * 2) - ARROW_AREA_WIDTH - FIELD_ARROW_PADDING,
                     hasHint && UseTallSize ? LINE_Y - (hintRect.Y + hintRect.Height) : LINE_Y);
 
                 g.Clip = new Region(textRect);
@@ -370,8 +373,8 @@
                 Text,
                 SkinManager.getFontByType(SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Subtitle1),
                 SkinManager.TextHighEmphasisNoAlphaColor,
-                new Point(e.Bounds.Location.X + SkinManager.FORM_PADDING, e.Bounds.Location.Y),
-                new Size(e.Bounds.Size.Width - SkinManager.FORM_PADDING * 2, e.Bounds.Size.Height),
+                new Point(e.Bounds.Location.X + FIELD_HORIZONTAL_PADDING, e.Bounds.Location.Y),
+                new Size(e.Bounds.Size.Width - FIELD_HORIZONTAL_PADDING * 2, e.Bounds.Size.Height),
                 NativeTextRenderer.TextAlignFlags.Left | NativeTextRenderer.TextAlignFlags.Middle); ;
             }
         }

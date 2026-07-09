@@ -286,8 +286,9 @@ namespace MaterialSkin.Controls
             );
             UpdateStyles();
             base.BackColor = Color.Transparent;
-            base.Font = SkinManager.getFontByType(MaterialSkinManager.fontType.Subtitle1);
-            _secondaryFont = SkinManager.getFontByType(MaterialSkinManager.fontType.Body1);
+            bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
+            base.Font = SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Subtitle1);
+            _secondaryFont = SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body1);
             SetDefaults();
             ShowBorder = true;
             ShowScrollBar = false;
@@ -347,40 +348,42 @@ namespace MaterialSkin.Controls
             if (_style == ListBoxStyle.TwoLine)
             {
                 _secondaryTextTopPadding = 4;
+                bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
                 if (_density == MaterialItemDensity.Dense)
                 {
                     _itemHeight = 60;
                     _secondaryTextBottomPadding = 10;
                     _primaryTextBottomPadding = 2;
-                    _primaryFont = SkinManager.getFontByType(MaterialSkinManager.fontType.Body1);
-                    _secondaryFont = SkinManager.getFontByType(MaterialSkinManager.fontType.Body2);
+                    _primaryFont = SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Body1);
+                    _secondaryFont = SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body2);
                 }
                 else
                 {
                     _itemHeight = 72;
                     _secondaryTextBottomPadding = 16;
                     _primaryTextBottomPadding = 4;
-                    _primaryFont = SkinManager.getFontByType(MaterialSkinManager.fontType.Subtitle1);
-                    _secondaryFont = SkinManager.getFontByType(MaterialSkinManager.fontType.Body1);
+                    _primaryFont = SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Subtitle1);
+                    _secondaryFont = SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body1);
                 }
             }
             else if (_style == ListBoxStyle.ThreeLine)
             {
                 _primaryTextBottomPadding = 4;
                 _secondaryTextTopPadding = 4;
+                bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
                 if (_density == MaterialItemDensity.Dense)
                 {
                     _itemHeight = 76;
                     _secondaryTextBottomPadding = 16;
-                    _primaryFont = SkinManager.getFontByType(MaterialSkinManager.fontType.Body1);
-                    _secondaryFont = SkinManager.getFontByType(MaterialSkinManager.fontType.Body2);
+                    _primaryFont = SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Body1);
+                    _secondaryFont = SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body2);
                 }
                 else
                 {
                     _itemHeight = 88;
                     _secondaryTextBottomPadding = 12;
-                    _primaryFont = SkinManager.getFontByType(MaterialSkinManager.fontType.Subtitle1);
-                    _secondaryFont = SkinManager.getFontByType(MaterialSkinManager.fontType.Body1);
+                    _primaryFont = SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Subtitle1);
+                    _secondaryFont = SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body1);
                 }
             }
             else
@@ -390,8 +393,9 @@ namespace MaterialSkin.Controls
                     _itemHeight = 40;
                 else
                     _itemHeight = 48;
-                _primaryFont = SkinManager.getFontByType(MaterialSkinManager.fontType.Subtitle1);
-                _secondaryFont = SkinManager.getFontByType(MaterialSkinManager.fontType.Body1);
+                bool isM3 = SkinManager.DesignVersion == MaterialSkinManager.MaterialDesignVersion.Material3;
+                _primaryFont = SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyLarge : MaterialSkinManager.fontType.Subtitle1);
+                _secondaryFont = SkinManager.getFontByType(isM3 ? MaterialSkinManager.fontType.BodyMedium : MaterialSkinManager.fontType.Body1);
             }
 
         }
